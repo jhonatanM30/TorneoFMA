@@ -1,4 +1,4 @@
-import { parsearRespuesta, construirHeaders } from "../js/apiErrors.js";
+import { parsearRespuesta, construirHeaders, construirHeadersMultipart } from "../js/apiErrors.js";
 
 // La URL base viene de js/config.js (window.APP_CONFIG), cargado antes que
 // este módulo en cada página. Nunca se hardcodea aquí.
@@ -64,6 +64,28 @@ export class EquipoService {
             return await parsearRespuesta(response, "Actualizar equipo");
         } catch (error) {
             console.error("Error al actualizar equipo:", error);
+            throw error;
+        }
+    }
+
+    // FRONTEND_VISION.md Fase1: sube el escudo del equipo (multipart) al
+    // nuevo endpoint POST /api/equipos/{id}/imagen. El equipo debe existir
+    // previamente (se sube DESPUES de crear/editar, usando el id ya
+    // conocido).
+    static async subirImagenEquipo(id, archivo) {
+        try {
+            const formData = new FormData();
+            formData.append("imagen", archivo);
+
+            const response = await fetch(`${API_URL}/${id}/imagen`, {
+                method: "POST",
+                headers: construirHeadersMultipart(),
+                body: formData
+            });
+
+            return await parsearRespuesta(response, "Subir imagen del equipo");
+        } catch (error) {
+            console.error("Error al subir la imagen del equipo:", error);
             throw error;
         }
     }

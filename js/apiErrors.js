@@ -58,6 +58,20 @@ export function construirHeaders() {
     return headers;
 }
 
+// Variante para subir archivos (multipart/form-data): el navegador debe
+// fijar el Content-Type con el boundary automáticamente, así que acá NO
+// se agrega (a diferencia de construirHeaders()). Usada por la subida del
+// escudo del equipo (FRONTEND_VISION.md Fase1).
+export function construirHeadersMultipart() {
+    const headers = { Accept: "application/json" };
+
+    if (window.APP_CONFIG?.AUTH_TOKEN) {
+        headers.Authorization = `Bearer ${window.APP_CONFIG.AUTH_TOKEN}`;
+    }
+
+    return headers;
+}
+
 // Lee y parsea la respuesta de un fetch, lanzando un Error con el mensaje
 // ya normalizado cuando la respuesta no fue exitosa. Centraliza el patrón
 // que antes estaba duplicado en cada método de EquipoService.

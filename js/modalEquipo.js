@@ -155,6 +155,19 @@ export function inicializarModalEquipo({ onEquipoGuardado = () => {} } = {}) {
                     }
 
                     if (resultado) {
+                        // FRONTEND_VISION.md Fase1: si el usuario adjuntó un
+                        // archivo, se sube DESPUES de crear/editar (recién
+                        // ahí se conoce el id del equipo).
+                        const inputArchivo = formEquipo.querySelector("#escudo-archivo");
+                        const archivo = inputArchivo?.files?.[0];
+                        if (archivo && resultado.id) {
+                            try {
+                                await EquipoService.subirImagenEquipo(resultado.id, archivo);
+                            } catch (errorImagen) {
+                                mostrarToast(errorImagen.message || "El equipo se guardó, pero no se pudo subir el escudo.", "error");
+                            }
+                        }
+
                         formEquipo.reset();
                         closeModal();
                         mostrarToast(mensajeExito, "success");
