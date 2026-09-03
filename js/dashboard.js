@@ -2,6 +2,7 @@ import { EquipoService } from "../services/EquipoService.js";
 import { JugadorService } from "../services/JugadorService.js";
 import { PartidoService } from "../services/PartidoService.js";
 import { EstadisticaService } from "../services/EstadisticaService.js";
+import { RegistroInformativoService } from "../services/RegistroInformativoService.js";
 
 // Colores fijos (no tomados de las variables CSS) porque Chart.js dibuja en
 // <canvas>: no hereda el tema por CSS, así que si el usuario cambia a modo
@@ -47,7 +48,64 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (equipos.status === "fulfilled" && jugadores.status === "fulfilled" && estadisticas.status === "fulfilled") {
         graficarGolesPorEquipo(equipos.value, jugadores.value, estadisticas.value);
     }
+
+    await cargarNovedades();
 });
+
+// FRONTEND_VISION.md Fase5, hallazgo 2: registros informativos creados
+// desde Configuracion (Fase 6), mostrados aqui del mas reciente al mas
+// antiguo (el backend ya los devuelve ordenados asi).
+async function cargarNovedades() {
+    const contenedor = document.querySelector(".novedades-container");
+    if (!contenedor) return;
+
+    try {
+        const registros = await RegistroInformativoService.obtenerRegistros();
+        renderNovedades(contenedor, Array.isArray(registros) ? registros : []);
+    } catch (error) {
+        console.error("No se pudieron cargar las novedades del torneo:", error);
+        contenedor.innerHTML = `
+            <div class="empty-state">
+                No se pudieron cargar las novedades del torneo.
+            </div>
+        `;
+    }
+}
+
+function renderNovedades(contenedor, registros) {
+    if (registros.length === 0) {
+        contenedor.innerHTML = `
+            <div class="empty-state">
+                Todavía no hay novedades publicadas. Se crean desde Configuración.
+            </div>
+        `;
+        return;
+    }
+
+    contenedor.innerHTML = `
+        <div class="novedades-lista">
+            ${registros.map((registro) => tarjetaNovedad(registro)).join("")}
+        </div>
+    `;
+}
+
+function tarjetaNovedad(registro) {
+    const fecha = formatearFechaNovedad(registro.fechaPublicacion);
+    return `
+        <article class="novedad-card">
+            <h4>${registro.titulo}</h4>
+            <p class="novedad-fecha">${fecha}</p>
+            <p class="novedad-contenido">${registro.contenido}</p>
+        </article>
+    `;
+}
+
+function formatearFechaNovedad(fechaISO) {
+    if (!fechaISO) return "";
+    const fecha = new Date(fechaISO);
+    if (Number.isNaN(fecha.getTime())) return "";
+    return fecha.toLocaleString("es-CO", { dateStyle: "medium", timeStyle: "short" });
+}
 
 function pintarContador(idElemento, resultado) {
     const elemento = document.getElementById(idElemento);
