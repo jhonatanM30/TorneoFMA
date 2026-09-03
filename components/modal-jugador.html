@@ -1,0 +1,41 @@
+<div id="modal-jugador" class="modal" aria-modal="true" role="dialog">
+    <div class="modal-content">
+        <span class="close" aria-label="Cerrar modal">&times;</span>
+        <h2 id="jugador-modal-title">Agregar Nuevo Jugador</h2>
+        <form id="form-jugador" novalidate>
+            <input type="hidden" id="jugador-id">
+
+            <label for="jugador-nombre">Nombre del Jugador:</label>
+            <input type="text" id="jugador-nombre" name="nombre" maxlength="100" required>
+
+            <label for="jugador-posicion">Posición:</label>
+            <select id="jugador-posicion" name="posicion" required>
+                <option value="">Seleccione</option>
+                <option value="PORTERO">Portero</option>
+                <option value="DEFENSA">Defensa</option>
+                <option value="MEDIOCAMPISTA">Mediocampista</option>
+                <option value="DELANTERO">Delantero</option>
+            </select>
+
+            <label for="jugador-edad">Edad:</label>
+            <input type="number" id="jugador-edad" name="edad" min="1" step="1" required>
+
+            <label for="jugador-dorsal">Número de dorsal:</label>
+            <input type="number" id="jugador-dorsal" name="dorsal" min="1" step="1" required>
+
+            <label for="jugador-equipo">Equipo:</label>
+            <select id="jugador-equipo" name="idEquipo" required>
+                <option value="">Seleccione un equipo</option>
+            </select>
+
+            <div id="jugador-form-status" class="form-status" aria-live="polite"></div>
+
+            <div class="modal-buttons">
+                <button type="button" id="jugador-cancelar-btn" class="btn-secundario">Cancelar</button>
+                <button id="jugador-submit-btn" type="submit">
+                <span id="jugador-submit-text">Guardar</span>
+            </button>
+            </div>
+        </form>
+    </div>
+</div>

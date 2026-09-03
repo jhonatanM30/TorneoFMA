@@ -1,0 +1,35 @@
+<div id="modal-jugador-lote" class="modal" aria-modal="true" role="dialog">
+    <div class="modal-content modal-content--ancho">
+        <span class="close" aria-label="Cerrar modal">&times;</span>
+        <h2>Cargar varios jugadores</h2>
+        <p class="modal-help">
+            Registra la plantilla de un equipo en una sola operación
+            (<code>POST /api/jugadores/batch</code>). El envío es optimista: si
+            alguna fila falla (por ejemplo, un dorsal repetido) las demás se
+            guardan igual y el detalle de cada una se muestra abajo.
+            Máximo 50 jugadores por lote.
+        </p>
+        <form id="form-jugador-lote" novalidate>
+            <label for="lote-equipo">Equipo:</label>
+            <select id="lote-equipo" name="idEquipo" required>
+                <option value="">Seleccione un equipo</option>
+            </select>
+
+            <div id="lote-filas" class="lote-filas">
+                <!-- Filas dinámicas: nombre, posición, edad, dorsal -->
+            </div>
+
+            <button type="button" id="lote-agregar-fila" class="btn-small btn-agregar-fila">+ Agregar otro jugador</button>
+
+            <div id="lote-form-status" class="form-status" aria-live="polite"></div>
+            <div id="lote-resultados" class="lote-resultados" aria-live="polite"></div>
+
+            <div class="modal-buttons">
+                <button type="button" id="lote-cancelar-btn" class="btn-secundario">Cancelar</button>
+                <button id="lote-submit-btn" type="submit">
+                <span id="lote-submit-text">Guardar lote</span>
+            </button>
+            </div>
+        </form>
+    </div>
+</div>
