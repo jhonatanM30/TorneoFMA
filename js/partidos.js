@@ -134,6 +134,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                         </div>
                     </div>
                     <div class="partido-actions">
+                        <a class="btn btn-small btn-alineacion" href="alineaciones.html?idPartido=${partido.id ?? ""}">Alineación</a>
                         <button class="btn btn-small btn-editar" data-id="${partido.id ?? ""}">Editar</button>
                         <button class="btn btn-small btn-eliminar" data-id="${partido.id ?? ""}">Eliminar</button>
                     </div>

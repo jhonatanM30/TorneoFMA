@@ -46,6 +46,18 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     filtroPartido.addEventListener("change", () => mostrarAlineacion(filtroPartido.value));
 
+    // FRONTEND_VISION.md Fase3: "Alineaciones deberia poder estar en un
+    // apartado del partido creado". En vez de mover el modulo (rompería
+    // la navegacion existente), Partidos enlaza aqui con
+    // alineaciones.html?idPartido=X y esta pagina preselecciona ese
+    // partido automaticamente.
+    const params = new URLSearchParams(window.location.search);
+    const idPartidoInicial = params.get("idPartido");
+    if (idPartidoInicial && filtroPartido.querySelector(`option[value="${idPartidoInicial}"]`)) {
+        filtroPartido.value = idPartidoInicial;
+        await mostrarAlineacion(idPartidoInicial);
+    }
+
     async function mostrarAlineacion(idPartido) {
         if (!idPartido) {
             resultado.innerHTML = `

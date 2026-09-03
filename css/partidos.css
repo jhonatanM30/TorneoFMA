@@ -156,7 +156,17 @@ h2{
 
 .partido-actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
+}
+
+/* fase3-08: enlace a Alineaciones desde la tarjeta del partido; es un <a>,
+   no un <button>, asi que se le quita el subrayado y se centra el texto
+   igual que los demas botones pequeños. */
+.partido-actions .btn-alineacion {
+    display: inline-block;
+    text-decoration: none;
+    text-align: center;
 }
 
 .btn-eliminar {
