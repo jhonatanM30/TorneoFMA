@@ -27,13 +27,17 @@
         </header>
 
         <div class="botones">
-            <button class="btn">Sorteo de partidos</button>
-            <button class="btn">Ver Equipos en Repechaje</button>
             <button class="btn">Agregar un nuevo equipo</button>
         </div>
 
         <div class="equipos-toolbar">
             <input id="buscar-equipo" type="search" placeholder="Buscar equipo por nombre" aria-label="Buscar equipo por nombre">
+            <select id="filtro-clasificacion" aria-label="Filtrar por tipo de clasificación">
+                <option value="">Todos los equipos</option>
+                <option value="Eliminatoria">Eliminatoria</option>
+                <option value="Repechaje">Repechaje</option>
+            </select>
+            <button id="btn-listar-todo" class="btn btn-secundario" type="button">Listar todo</button>
         </div>
 
         <section class="equipos-container">

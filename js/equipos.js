@@ -9,6 +9,8 @@ const DEFAULT_TEAM_IMAGE = "assets/comark.jpg";
 document.addEventListener("DOMContentLoaded", async function () {
     const equiposContainer = document.querySelector(".equipos-container");
     const searchInput = document.getElementById("buscar-equipo");
+    const filtroClasificacion = document.getElementById("filtro-clasificacion");
+    const btnListarTodo = document.getElementById("btn-listar-todo");
     const btnAgregarEquipo = document.querySelector(".botones .btn:last-child");
 
     if (!equiposContainer) {
@@ -30,29 +32,53 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
+    // Aplica el filtro de tipo de clasificación (Eliminatoria/Repechaje) de
+    // forma local: el listado completo ya viene del backend, no se necesita
+    // un endpoint aparte para esto (FRONTEND_VISION.md Fase1: "ver equipos
+    // en repechaje / eliminatoria").
+    const filtrarPorClasificacion = (lista) => {
+        const tipo = filtroClasificacion ? filtroClasificacion.value : "";
+        if (!tipo) return lista;
+        return lista.filter((equipo) => (equipo.tipoClasificacion || "").toLowerCase() === tipo.toLowerCase());
+    };
+
+    const refrescar = async () => {
+        const query = searchInput ? searchInput.value.trim() : "";
+
+        if (query) {
+            await buscarEquiposPorNombre(equiposContainer, query, filtrarPorClasificacion);
+            return;
+        }
+
+        await cargarEquipos(equiposContainer, filtrarPorClasificacion);
+    };
+
     if (searchInput) {
-        searchInput.addEventListener("input", async (event) => {
-            const query = event.target.value.trim();
+        searchInput.addEventListener("input", refrescar);
+    }
 
-            if (!query) {
-                await cargarEquipos(equiposContainer);
-                return;
-            }
+    if (filtroClasificacion) {
+        filtroClasificacion.addEventListener("change", refrescar);
+    }
 
-            await buscarEquiposPorNombre(equiposContainer, query);
+    if (btnListarTodo) {
+        btnListarTodo.addEventListener("click", async () => {
+            if (searchInput) searchInput.value = "";
+            if (filtroClasificacion) filtroClasificacion.value = "";
+            await cargarEquipos(equiposContainer);
         });
     }
 
-    await cargarEquipos(equiposContainer);
+    await cargarEquipos(equiposContainer, filtrarPorClasificacion);
 });
 
-async function cargarEquipos(equiposContainer) {
+async function cargarEquipos(equiposContainer, filtrar = (lista) => lista) {
     equiposContainer.innerHTML = "<div class='loading-state'>Cargando equipos...</div>";
 
     try {
         const equipos = await EquipoService.obtenerEquipos();
         equiposCache = Array.isArray(equipos) ? equipos : [];
-        renderEquipos(equiposContainer, equiposCache);
+        renderEquipos(equiposContainer, filtrar(equiposCache));
     } catch (error) {
         equiposContainer.innerHTML = `
             <div class="empty-state">
@@ -63,10 +89,10 @@ async function cargarEquipos(equiposContainer) {
     }
 }
 
-async function buscarEquiposPorNombre(equiposContainer, nombre) {
+async function buscarEquiposPorNombre(equiposContainer, nombre, filtrar = (lista) => lista) {
     try {
         const equipos = await EquipoService.buscarEquiposPorNombre(nombre);
-        renderEquipos(equiposContainer, Array.isArray(equipos) ? equipos : []);
+        renderEquipos(equiposContainer, filtrar(Array.isArray(equipos) ? equipos : []));
     } catch (error) {
         equiposContainer.innerHTML = `
             <div class="empty-state">

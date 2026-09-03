@@ -40,17 +40,34 @@ h2{
     width: 100%;
     max-width: 900px;
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
+    align-items: center;
+    gap: 12px;
     margin: 20px auto 0;
 }
 
-.equipos-toolbar input {
-    width: min(100%, 420px);
+.equipos-toolbar input,
+.equipos-toolbar select {
     padding: 12px 16px;
     border: 1px solid #d4d4d4;
     border-radius: 999px;
     font-size: 15px;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.equipos-toolbar input {
+    width: min(100%, 420px);
+}
+
+.equipos-toolbar select {
+    background: var(--color-surface, #fff);
+    color: var(--color-text, #222);
+}
+
+.equipos-toolbar .btn {
+    border-radius: 999px;
+    padding: 12px 18px;
 }
 
 /* Contenedor principal de equipos */
