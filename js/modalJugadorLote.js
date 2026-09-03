@@ -1,4 +1,5 @@
 import { JugadorService } from "../services/JugadorService.js";
+import { mostrarToast } from "./toast.js";
 
 const MAX_FILAS = 50;
 
@@ -54,7 +55,6 @@ export function inicializarModalJugadorLote({ equipos = [], onLoteGuardado = () 
             const filasContainer = modal.querySelector("#lote-filas");
             const btnAgregarFila = modal.querySelector("#lote-agregar-fila");
             const formStatus = modal.querySelector("#lote-form-status");
-            const resultadosContainer = modal.querySelector("#lote-resultados");
             const submitButton = modal.querySelector("#lote-submit-btn");
             const submitText = modal.querySelector("#lote-submit-text");
 
@@ -90,7 +90,6 @@ export function inicializarModalJugadorLote({ equipos = [], onLoteGuardado = () 
                 filasContainer.innerHTML = "";
                 contadorFilas = 0;
                 agregarFila();
-                resultadosContainer.innerHTML = "";
                 setStatus("");
             };
 
@@ -150,21 +149,30 @@ export function inicializarModalJugadorLote({ equipos = [], onLoteGuardado = () 
                 submitButton.disabled = true;
                 submitText.textContent = "Guardando...";
                 setStatus("");
-                resultadosContainer.innerHTML = "";
 
                 try {
                     const respuesta = await JugadorService.crearJugadoresEnLote(jugadores);
 
-                    resultadosContainer.innerHTML = respuesta.resultados.map((item) => {
-                        const nombreFila = jugadores[item.indice]?.nombre || `Fila ${item.indice + 1}`;
-                        if (item.exito) {
-                            return `<div class="lote-resultado-item exito">✔ ${nombreFila}: creado correctamente.</div>`;
-                        }
-                        return `<div class="lote-resultado-item error">✘ ${nombreFila}: ${item.error}</div>`;
-                    }).join("");
+                    // FRONTEND_VISION.md Fase2: "la información de respuesta
+                    // debería verse en un toast no en el mismo modal para que
+                    // este se pueda cerrar y mostrar la lista con los nuevos
+                    // jugadores". Antes el detalle se quedaba pintado dentro
+                    // del modal (que además ya no se cerraba solo).
+                    closeModal();
 
-                    setStatus(`Procesados ${respuesta.total}: ${respuesta.exitosos} creados, ${respuesta.fallidos} con error.`,
-                        respuesta.fallidos > 0 ? "error" : "success");
+                    mostrarToast(
+                        `Procesados ${respuesta.total}: ${respuesta.exitosos} creados, ${respuesta.fallidos} con error.`,
+                        respuesta.fallidos > 0 ? "error" : "success"
+                    );
+
+                    const fallidos = respuesta.resultados.filter((item) => !item.exito);
+                    if (fallidos.length > 0) {
+                        const detalle = fallidos.slice(0, 3).map((item) => {
+                            const nombreFila = jugadores[item.indice]?.nombre || `Fila ${item.indice + 1}`;
+                            return `${nombreFila}: ${item.error}`;
+                        }).join(" · ");
+                        mostrarToast(detalle + (fallidos.length > 3 ? ` (y ${fallidos.length - 3} más)` : ""), "error");
+                    }
 
                     if (respuesta.exitosos > 0) {
                         await onLoteGuardado();
