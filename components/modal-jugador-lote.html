@@ -3,11 +3,14 @@
         <span class="close" aria-label="Cerrar modal">&times;</span>
         <h2>Cargar varios jugadores</h2>
         <p class="modal-help">
-            Registra la plantilla de un equipo en una sola operación
-            (<code>POST /api/jugadores/batch</code>). El envío es optimista: si
-            alguna fila falla (por ejemplo, un dorsal repetido) las demás se
-            guardan igual y el detalle de cada una se muestra abajo.
-            Máximo 50 jugadores por lote.
+            Agrega aquí toda la plantilla de una vez: una fila por jugador,
+            con su nombre, posición, edad, dorsal y el equipo al que
+            pertenece (puedes mezclar jugadores de distintos equipos en la
+            misma carga). Usa "+ Agregar otro jugador" para sumar filas y la
+            "×" de cada fila para quitarla. Si algún jugador tiene un dato
+            inválido (por ejemplo, un dorsal repetido en su equipo), los
+            demás se guardan igual: al final te avisamos cuáles quedaron
+            bien y cuáles no. Máximo 50 jugadores por carga.
         </p>
         <form id="form-jugador-lote" novalidate>
             <label for="lote-equipo">Equipo:</label>
