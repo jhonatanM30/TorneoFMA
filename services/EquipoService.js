@@ -19,17 +19,16 @@ export class EquipoService {
         }
     }
 
+    // Usa GET /api/equipos/buscar?nombre=... (coincidencia parcial), no
+    // GET /api/equipos/{nombre} (match exacto): FRONTEND_VISION.md Fase1
+    // pedía que escribir la inicial de un equipo existente lo encontrara.
     static async buscarEquiposPorNombre(nombre) {
         try {
             const query = encodeURIComponent(nombre.trim());
-            const response = await fetch(`${API_URL}/${query}`, {
+            const response = await fetch(`${API_URL}/buscar?nombre=${query}`, {
                 method: "GET",
                 headers: construirHeaders()
             });
-
-            if (response.status === 404) {
-                return [];
-            }
 
             const payload = await parsearRespuesta(response, "Buscar equipo por nombre");
             return Array.isArray(payload) ? payload : payload ? [payload] : [];
