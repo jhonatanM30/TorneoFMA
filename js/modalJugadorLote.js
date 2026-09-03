@@ -47,6 +47,8 @@ export function inicializarModalJugadorLote({ equipos = [], onLoteGuardado = () 
             const submitButton = modal.querySelector("#lote-submit-btn");
             const submitText = modal.querySelector("#lote-submit-text");
 
+            modal.style.display = "none";
+
             selectEquipo.innerHTML = '<option value="">Seleccione un equipo</option>' +
                 equipos.map((equipo) => `<option value="${equipo.id}">${equipo.nombre}</option>`).join("");
 
