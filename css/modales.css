@@ -76,7 +76,8 @@
 }
 
 .modal-content input,
-.modal-content select {
+.modal-content select,
+.modal-content textarea {
     padding: 10px;
     font-size: 16px;
     border: 1px solid var(--color-input-border);
@@ -85,6 +86,17 @@
     box-sizing: border-box;
     background: var(--color-input-bg);
     color: var(--color-text);
+}
+
+/* Fase6 (Configuracion): el contenido de un registro informativo es un
+   textarea (a diferencia del resto de modales, que solo usan input/select),
+   asi que se agrega font-family heredada (por defecto los textarea usan la
+   fuente monoespaciada del navegador) y resize vertical para no romper el
+   ancho fijo del modal. */
+.modal-content textarea {
+    font-family: inherit;
+    resize: vertical;
+    min-height: 100px;
 }
 
 /* Checkbox inline (usado por el modal de Alineación: "Titular"), a

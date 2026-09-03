@@ -1,0 +1,22 @@
+<div id="modal-registro-informativo" class="modal" aria-modal="true" role="dialog">
+    <div class="modal-content">
+        <span class="close" aria-label="Cerrar modal">&times;</span>
+        <h2>Nuevo registro informativo</h2>
+        <form id="form-registro-informativo" novalidate>
+            <label for="registro-titulo">Título:</label>
+            <input type="text" id="registro-titulo" name="titulo" maxlength="150" required>
+
+            <label for="registro-contenido">Contenido:</label>
+            <textarea id="registro-contenido" name="contenido" rows="5" required></textarea>
+
+            <div id="registro-form-status" class="form-status" aria-live="polite"></div>
+
+            <div class="modal-buttons">
+                <button type="button" id="registro-cancelar-btn" class="btn-secundario">Cancelar</button>
+                <button id="registro-submit-btn" type="submit">
+                <span id="registro-submit-text">Guardar</span>
+            </button>
+            </div>
+        </form>
+    </div>
+</div>

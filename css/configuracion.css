@@ -1,0 +1,98 @@
+.botones {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 25px;
+    margin-top: 200px;
+}
+
+.btn {
+    background-color: var(--color-accent);
+    color: black;
+    border: none;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: 0.3s ease-in-out;
+}
+
+.btn:hover {
+    background-color: var(--color-accent-dark);
+    transform: scale(1.05);
+}
+
+.btn-small {
+    padding: 8px 12px;
+    font-size: 12px;
+}
+
+.registros-container {
+    max-width: 900px;
+    width: 100%;
+    margin: 30px auto 25px;
+    padding: 0 20px;
+}
+
+.registros-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.registro-card {
+    background: var(--color-surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-soft);
+    padding: 18px 20px;
+    text-align: left;
+}
+
+.registro-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.registro-card-header h3 {
+    margin: 0;
+    color: var(--color-text);
+    font-size: 18px;
+}
+
+.registro-fecha {
+    margin: 4px 0 10px;
+    font-size: 12px;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.registro-contenido {
+    margin: 0;
+    color: var(--color-text);
+    white-space: pre-wrap;
+    line-height: 1.5;
+}
+
+.loading-state,
+.empty-state {
+    width: 100%;
+    max-width: 900px;
+    text-align: center;
+    color: var(--color-text);
+    background: var(--color-surface);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px auto 0;
+    font-weight: 600;
+}
+
+@media (max-width: 600px) {
+    .registro-card-header {
+        flex-direction: column;
+    }
+}
