@@ -2,11 +2,23 @@ import { JugadorService } from "../services/JugadorService.js";
 
 const MAX_FILAS = 50;
 
-function crearFila(indice) {
+// FRONTEND_VISION.md Fase2: "cada uno podria estar relacionado a un
+// equipo diferente [...] equipo macalister agrego 2 jugadores, equipo
+// socios.com agrego 3 jugadores y todo esto se vaya en el proceso batch".
+// El equipo se elige POR FILA (antes era un select único para todo el
+// lote); el backend ya soporta idEquipo distinto por item
+// (JugadorService.guardarJugadoresEnLote valida dorsal duplicado por
+// equipo, no de forma global), asi que este es un cambio solo de Front.
+function crearFila(indice, equipos) {
     const fila = document.createElement("div");
     fila.className = "lote-fila";
     fila.dataset.indice = indice;
+
+    const opcionesEquipo = '<option value="">Equipo</option>' +
+        equipos.map((equipo) => `<option value="${equipo.id}">${equipo.nombre}</option>`).join("");
+
     fila.innerHTML = `
+        <select class="lote-equipo-fila" required>${opcionesEquipo}</select>
         <input type="text" class="lote-nombre" placeholder="Nombre" maxlength="100" required>
         <select class="lote-posicion" required>
             <option value="">Posición</option>
@@ -41,16 +53,12 @@ export function inicializarModalJugadorLote({ equipos = [], onLoteGuardado = () 
             const form = modal.querySelector("#form-jugador-lote");
             const filasContainer = modal.querySelector("#lote-filas");
             const btnAgregarFila = modal.querySelector("#lote-agregar-fila");
-            const selectEquipo = modal.querySelector("#lote-equipo");
             const formStatus = modal.querySelector("#lote-form-status");
             const resultadosContainer = modal.querySelector("#lote-resultados");
             const submitButton = modal.querySelector("#lote-submit-btn");
             const submitText = modal.querySelector("#lote-submit-text");
 
             modal.style.display = "none";
-
-            selectEquipo.innerHTML = '<option value="">Seleccione un equipo</option>' +
-                equipos.map((equipo) => `<option value="${equipo.id}">${equipo.nombre}</option>`).join("");
 
             let contadorFilas = 0;
 
@@ -65,7 +73,7 @@ export function inicializarModalJugadorLote({ equipos = [], onLoteGuardado = () 
                     return;
                 }
                 contadorFilas += 1;
-                filasContainer.appendChild(crearFila(contadorFilas));
+                filasContainer.appendChild(crearFila(contadorFilas, equipos));
             };
 
             filasContainer.addEventListener("click", (event) => {
@@ -82,7 +90,6 @@ export function inicializarModalJugadorLote({ equipos = [], onLoteGuardado = () 
                 filasContainer.innerHTML = "";
                 contadorFilas = 0;
                 agregarFila();
-                selectEquipo.value = "";
                 resultadosContainer.innerHTML = "";
                 setStatus("");
             };
@@ -106,7 +113,8 @@ export function inicializarModalJugadorLote({ equipos = [], onLoteGuardado = () 
             const haySinGuardar = () => {
                 return Array.from(filasContainer.querySelectorAll(".lote-fila")).some((fila) => {
                     return ["lote-nombre", "lote-edad", "lote-dorsal"].some((clase) => fila.querySelector(`.${clase}`).value.trim() !== "")
-                        || fila.querySelector(".lote-posicion").value !== "";
+                        || fila.querySelector(".lote-posicion").value !== ""
+                        || fila.querySelector(".lote-equipo-fila").value !== "";
                 });
             };
 
@@ -124,24 +132,18 @@ export function inicializarModalJugadorLote({ equipos = [], onLoteGuardado = () 
             form.addEventListener("submit", async (event) => {
                 event.preventDefault();
 
-                const idEquipo = selectEquipo.value ? Number(selectEquipo.value) : null;
-                if (!idEquipo) {
-                    setStatus("Debe seleccionar el equipo para el que se registran los jugadores.", "error");
-                    return;
-                }
-
                 const filas = Array.from(filasContainer.querySelectorAll(".lote-fila"));
                 const jugadores = filas.map((fila) => ({
                     nombre: fila.querySelector(".lote-nombre").value.trim(),
                     posicion: fila.querySelector(".lote-posicion").value,
                     edad: Number(fila.querySelector(".lote-edad").value),
                     dorsal: Number(fila.querySelector(".lote-dorsal").value),
-                    idEquipo
+                    idEquipo: fila.querySelector(".lote-equipo-fila").value ? Number(fila.querySelector(".lote-equipo-fila").value) : null
                 }));
 
-                const filasIncompletas = jugadores.some((j) => !j.nombre || !j.posicion || !j.edad || !j.dorsal);
+                const filasIncompletas = jugadores.some((j) => !j.nombre || !j.posicion || !j.edad || !j.dorsal || !j.idEquipo);
                 if (filasIncompletas) {
-                    setStatus("Completa nombre, posición, edad y dorsal en todas las filas (o quítalas si no las vas a usar).", "error");
+                    setStatus("Completa equipo, nombre, posición, edad y dorsal en todas las filas (o quítalas si no las vas a usar).", "error");
                     return;
                 }
 
