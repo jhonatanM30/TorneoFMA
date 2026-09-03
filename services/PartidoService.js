@@ -18,10 +18,13 @@ export class PartidoService {
     }
 
     // GET /api/partidos/{nombre}: partidos (local o visitante) de un equipo.
+    // Usa GET /api/partidos/buscar?nombre=... (coincidencia parcial), no
+    // GET /api/partidos/{nombre} (match exacto): mismo ajuste que
+    // EquipoService.buscarEquiposPorNombre (FRONTEND_VISION.md Fase3).
     static async buscarPartidosPorEquipo(nombre) {
         try {
             const query = encodeURIComponent(nombre.trim());
-            const response = await fetch(`${API_URL}/${query}`, {
+            const response = await fetch(`${API_URL}/buscar?nombre=${query}`, {
                 method: "GET",
                 headers: construirHeaders()
             });
