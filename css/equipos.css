@@ -168,3 +168,60 @@ h2{
         width: 90%;
     }
 }
+
+/* Modal de detalle de equipo (FRONTEND_VISION.md Fase1: reemplaza el
+   alert() de "Detalle"). */
+.modal-detalle-content {
+    max-width: 460px;
+    max-height: 85vh;
+    overflow-y: auto;
+    text-align: left;
+}
+
+.modal-detalle-content h2 {
+    text-align: center;
+}
+
+.detalle-equipo-imagen {
+    display: block;
+    width: 96px;
+    height: 96px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin: 0 auto 12px;
+    border: 3px solid var(--color-surface, #fff);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.detalle-equipo-contador {
+    margin-top: 16px;
+    font-size: 15px;
+}
+
+.detalle-equipo-jugadores-lista {
+    list-style: none;
+    margin: 8px 0 0;
+    padding: 0;
+    max-height: 220px;
+    overflow-y: auto;
+    border-top: 1px solid var(--color-input-border, #ddd);
+}
+
+.detalle-equipo-jugadores-lista li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 4px;
+    border-bottom: 1px solid var(--color-input-border, #ddd);
+    font-size: 14px;
+}
+
+.detalle-equipo-sin-jugadores {
+    justify-content: center !important;
+    color: var(--color-text-muted, #777);
+}
+
+.detalle-jugador-posicion {
+    font-size: 12px;
+    color: var(--color-text-muted, #777);
+}

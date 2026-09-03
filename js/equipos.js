@@ -1,6 +1,7 @@
 import { EquipoService } from "../services/EquipoService.js";
 import { mostrarToast } from "./toast.js";
 import { inicializarModalEquipo } from "./modalEquipo.js";
+import { inicializarModalDetalleEquipo } from "./modalDetalleEquipo.js";
 
 let equiposCache = [];
 
@@ -23,6 +24,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             await cargarEquipos(equiposContainer);
         }
     });
+
+    inicializarModalDetalleEquipo();
 
     if (btnAgregarEquipo) {
         btnAgregarEquipo.addEventListener("click", () => {
@@ -138,13 +141,9 @@ function renderEquipos(equiposContainer, equipos) {
     equiposContainer.querySelectorAll(".btn-detalle").forEach((button) => {
         button.addEventListener("click", () => {
             const equipo = equipos.find((item) => String(item.id) === String(button.dataset.id));
-            if (!equipo) return;
-
-            const jugadores = Array.isArray(equipo.jugadores) && equipo.jugadores.length > 0
-                ? equipo.jugadores.map((jugador) => `- ${jugador.nombre || "Jugador"}`).join("\n")
-                : "- Sin jugadores registrados";
-
-            alert(`Equipo: ${equipo.nombre}\nDirector técnico: ${equipo.directorTecnico || "Sin dato"}\nClasificación: ${equipo.tipoClasificacion || "Sin dato"}\n\nJugadores:\n${jugadores}`);
+            if (equipo && window.abrirModalDetalleEquipo) {
+                window.abrirModalDetalleEquipo(equipo);
+            }
         });
     });
 
