@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estadísticas - Más Que Amigos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/estadisticas.css">
+    <link rel="stylesheet" href="css/modales.css">
+
+    <script src="js/config.js"></script>
+    <script defer src="js/app.js"></script>
+    <script defer type="module" src="js/estadisticas.js"></script>
+</head>
+<body data-page="estadisticas">
+    <!-- Contenedor del menú -->
+    <div id="menu-container"></div>
+
+    <!-- Contenido de estadísticas -->
+    <div class="main-content">
+        <header class="banner banner--estadisticas">
+            <h2>ESTADÍSTICAS</h2>
+            <p class="banner-subtitle">Goles, tarjetas y asistencias de cada jugador</p>
+            <p class="banner-date">Edición 2025 - Inicia el 26 de Diciembre</p>
+        </header>
+
+        <div class="botones">
+            <button class="btn" id="btn-agregar-estadistica">Registrar estadística</button>
+        </div>
+
+        <div class="estadisticas-toolbar">
+            <select id="filtro-jugador" aria-label="Filtrar por jugador">
+                <option value="">Todos los jugadores</option>
+            </select>
+            <select id="filtro-partido" aria-label="Filtrar por partido">
+                <option value="">Todos los partidos</option>
+            </select>
+        </div>
+
+        <section class="estadisticas-container">
+            <div class="loading-state">Cargando estadísticas...</div>
+        </section>
+    </div>
+    <div id="modal-container"></div>
+    <!-- Contenedor del footer -->
+    <div id="footer-container"></div>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<div id="modal-estadistica" class="modal" aria-modal="true" role="dialog">
+    <div class="modal-content">
+        <span class="close" aria-label="Cerrar modal">&times;</span>
+        <h2>Registrar Estadística</h2>
+        <form id="form-estadistica" novalidate>
+            <label for="estadistica-partido">Partido:</label>
+            <select id="estadistica-partido" name="idPartido" required>
+                <option value="">Seleccione un partido</option>
+            </select>
+
+            <label for="estadistica-jugador">Jugador:</label>
+            <select id="estadistica-jugador" name="idJugador" required disabled>
+                <option value="">Seleccione un partido primero</option>
+            </select>
+
+            <label for="estadistica-goles">Goles:</label>
+            <input type="number" id="estadistica-goles" name="goles" min="0" step="1" value="0" required>
+
+            <label for="estadistica-amarillas">Tarjetas amarillas:</label>
+            <input type="number" id="estadistica-amarillas" name="tarjetasAmarillas" min="0" step="1" value="0" required>
+
+            <label for="estadistica-rojas">Tarjetas rojas:</label>
+            <input type="number" id="estadistica-rojas" name="tarjetasRojas" min="0" step="1" value="0" required>
+
+            <label for="estadistica-asistencias">Asistencias:</label>
+            <input type="number" id="estadistica-asistencias" name="asistencias" min="0" step="1" value="0" required>
+
+            <div id="estadistica-form-status" class="form-status" aria-live="polite"></div>
+
+            <div class="modal-buttons">
+                <button type="button" id="estadistica-cancelar-btn" class="btn-secundario">Cancelar</button>
+                <button id="estadistica-submit-btn" type="submit">
+                <span id="estadistica-submit-text">Guardar</span>
+            </button>
+            </div>
+        </form>
+    </div>
+</div>
