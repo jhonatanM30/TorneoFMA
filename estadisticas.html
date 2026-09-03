@@ -12,6 +12,10 @@
 
     <script src="js/config.js"></script>
     <script defer src="js/app.js"></script>
+    <!-- Chart.js (FRONTEND_VISION.md Fase4 bonus: "permitete darle estilo
+         con diferentes graficos ademas de la informacion"), cargado antes
+         que estadisticas.js para que exista como global cuando este corra. -->
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.1/chart.umd.min.js"></script>
     <script defer type="module" src="js/estadisticas.js"></script>
 </head>
 <body data-page="estadisticas">
@@ -29,6 +33,36 @@
         <div class="botones">
             <button class="btn" id="btn-agregar-estadistica">Registrar estadística</button>
         </div>
+
+        <!-- FRONTEND_VISION.md Fase4: "Deberia permitir consultar
+             estadisticas de jugadores, partidos y equipos [...] titulos
+             ganados, participaciones entre ellas". La tabla de abajo ya
+             cubre jugador+partido; este resumen agrega por equipo. -->
+        <section class="estadisticas-resumen">
+            <h3>Resumen por equipo</h3>
+            <div class="estadisticas-resumen-grid">
+                <div class="tabla-scroll">
+                    <table class="estadisticas-table" id="tabla-resumen-equipos">
+                        <thead>
+                            <tr>
+                                <th>Equipo</th>
+                                <th>Partidos jugados</th>
+                                <th>Títulos</th>
+                                <th>Goles</th>
+                                <th>T. Amarillas</th>
+                                <th>T. Rojas</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-resumen-equipos-body">
+                            <tr><td colspan="6" class="loading-state">Cargando resumen...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="chart-card">
+                    <canvas id="chart-equipos-stats"></canvas>
+                </div>
+            </div>
+        </section>
 
         <div class="estadisticas-toolbar">
             <select id="filtro-jugador" aria-label="Filtrar por jugador">

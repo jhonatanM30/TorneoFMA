@@ -1,3 +1,4 @@
+import { EquipoService } from "../services/EquipoService.js";
 import { JugadorService } from "../services/JugadorService.js";
 import { mostrarToast } from "./toast.js";
 import { PartidoService } from "../services/PartidoService.js";
@@ -7,6 +8,7 @@ import { inicializarModalEstadistica } from "./modalEstadistica.js";
 let estadisticasCache = [];
 let jugadoresCache = [];
 let partidosCache = [];
+let equiposCache = [];
 
 document.addEventListener("DOMContentLoaded", async function () {
     const estadisticasContainer = document.querySelector(".estadisticas-container");
@@ -23,14 +25,16 @@ document.addEventListener("DOMContentLoaded", async function () {
     // para el filtro por partido del modal; JugadorService.obtenerJugadores
     // ya devuelve esa relación, así que no hace falta cruzar con equipos aquí.
     try {
-        [jugadoresCache, partidosCache] = await Promise.all([
+        [jugadoresCache, partidosCache, equiposCache] = await Promise.all([
             JugadorService.obtenerJugadores(),
-            PartidoService.obtenerPartidos()
+            PartidoService.obtenerPartidos(),
+            EquipoService.obtenerEquipos()
         ]);
     } catch (error) {
         jugadoresCache = [];
         partidosCache = [];
-        console.error("No se pudieron cargar jugadores/partidos para Estadísticas:", error);
+        equiposCache = [];
+        console.error("No se pudieron cargar jugadores/partidos/equipos para Estadísticas:", error);
     }
 
     llenarSelectJugadores(filtroJugador, jugadoresCache);
@@ -148,8 +152,84 @@ document.addEventListener("DOMContentLoaded", async function () {
     filtroJugador.addEventListener("change", () => render(filtrarLocalmente(estadisticasCache)));
     filtroPartido.addEventListener("change", () => render(filtrarLocalmente(estadisticasCache)));
 
+    renderResumenPorEquipo();
+
     await cargarEstadisticas();
 });
+
+// FRONTEND_VISION.md Fase4: resumen agregado por equipo (partidos
+// jugados, titulos, goles y tarjetas totales) + un grafico, a partir de
+// los mismos datos ya cargados (sin endpoints nuevos: el backend no tiene
+// una consulta de agregados, se calcula en el cliente).
+function renderResumenPorEquipo() {
+    const cuerpoTabla = document.getElementById("tabla-resumen-equipos-body");
+    const canvas = document.getElementById("chart-equipos-stats");
+    if (!cuerpoTabla) return;
+
+    const jugadorPorId = new Map(jugadoresCache.map((jugador) => [String(jugador.id), jugador]));
+
+    const resumenPorEquipo = new Map();
+    const obtenerResumen = (idEquipo) => {
+        if (!resumenPorEquipo.has(idEquipo)) {
+            resumenPorEquipo.set(idEquipo, { partidos: new Set(), goles: 0, amarillas: 0, rojas: 0 });
+        }
+        return resumenPorEquipo.get(idEquipo);
+    };
+
+    partidosCache.forEach((partido) => {
+        if (partido.equipoLocal?.id) obtenerResumen(partido.equipoLocal.id).partidos.add(partido.id);
+        if (partido.equipoVisitante?.id) obtenerResumen(partido.equipoVisitante.id).partidos.add(partido.id);
+    });
+
+    estadisticasCache.forEach((estadistica) => {
+        const jugador = jugadorPorId.get(String(estadistica.idJugador));
+        const idEquipo = jugador?.idEquipo ?? jugador?.equipo?.id;
+        if (idEquipo === undefined || idEquipo === null) return;
+
+        const resumen = obtenerResumen(idEquipo);
+        resumen.goles += Number(estadistica.goles || 0);
+        resumen.amarillas += Number(estadistica.tarjetasAmarillas || 0);
+        resumen.rojas += Number(estadistica.tarjetasRojas || 0);
+    });
+
+    if (equiposCache.length === 0) {
+        cuerpoTabla.innerHTML = '<tr><td colspan="6" class="empty-state">No hay equipos registrados.</td></tr>';
+        return;
+    }
+
+    cuerpoTabla.innerHTML = equiposCache.map((equipo) => {
+        const resumen = obtenerResumen(equipo.id);
+        return `
+            <tr>
+                <td>${equipo.nombre}</td>
+                <td>${resumen.partidos.size}</td>
+                <td>${equipo.titulos ?? 0}</td>
+                <td>${resumen.goles}</td>
+                <td>${resumen.amarillas}</td>
+                <td>${resumen.rojas}</td>
+            </tr>
+        `;
+    }).join("");
+
+    if (!canvas || typeof Chart === "undefined") return;
+
+    new Chart(canvas, {
+        type: "bar",
+        data: {
+            labels: equiposCache.map((equipo) => equipo.nombre),
+            datasets: [
+                { label: "Goles", data: equiposCache.map((equipo) => obtenerResumen(equipo.id).goles), backgroundColor: "#145A32" },
+                { label: "T. Amarillas", data: equiposCache.map((equipo) => obtenerResumen(equipo.id).amarillas), backgroundColor: "#FFD700" },
+                { label: "T. Rojas", data: equiposCache.map((equipo) => obtenerResumen(equipo.id).rojas), backgroundColor: "#b22222" }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: "bottom" } },
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+    });
+}
 
 function llenarSelectJugadores(select, jugadores) {
     select.innerHTML = '<option value="">Todos los jugadores</option>' +

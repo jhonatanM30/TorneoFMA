@@ -116,3 +116,38 @@
         padding: 8px 10px;
     }
 }
+
+/* Resumen por equipo (FRONTEND_VISION.md Fase4) */
+.estadisticas-resumen {
+    width: 100%;
+    max-width: 1100px;
+    margin: 24px auto 0;
+    text-align: center;
+}
+
+.estadisticas-resumen h3 {
+    font-family: var(--font-heading);
+    margin-bottom: 12px;
+}
+
+.estadisticas-resumen-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: stretch;
+}
+
+.tabla-scroll {
+    flex: 1 1 420px;
+    overflow-x: auto;
+}
+
+.chart-card {
+    background: var(--color-surface);
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 16px 20px 20px;
+    flex: 1 1 340px;
+    min-width: 280px;
+    max-width: 460px;
+}
