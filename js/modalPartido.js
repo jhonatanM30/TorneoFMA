@@ -39,8 +39,9 @@ const validarPartido = (partido) => {
 };
 
 // equipos: lista de EquipoDTO ya cargada por partidos.js.
-// El backend (PartidoController) solo expone crear y eliminar, no editar,
-// así que este modal (a diferencia de Equipo/Jugador) no tiene modo edición.
+// FRONTEND_VISION.md Fase3: "un partido se deberia permitir Editar" - ya
+// se agrego PUT /api/partidos en el backend, este modal ahora soporta
+// modo edicion igual que Equipo/Jugador (id oculto + abrirModalPartido(partido)).
 export function inicializarModalPartido({ equipos = [], onPartidoGuardado = () => {} } = {}) {
     const modalContainer = document.getElementById("modal-container");
 
@@ -58,8 +59,10 @@ export function inicializarModalPartido({ equipos = [], onPartidoGuardado = () =
             const btnCerrarModal = modal.querySelector(".close");
             const formPartido = modal.querySelector("#form-partido");
             const formStatus = modal.querySelector("#partido-form-status");
+            const modalTitle = modal.querySelector("#partido-modal-title");
             const submitButton = modal.querySelector("#partido-submit-btn");
             const submitText = modal.querySelector("#partido-submit-text");
+            const hiddenId = modal.querySelector("#partido-id");
             const selectLocal = modal.querySelector("#partido-local");
             const selectVisitante = modal.querySelector("#partido-visitante");
             const inputFecha = modal.querySelector("#partido-fecha");
@@ -111,12 +114,33 @@ export function inicializarModalPartido({ equipos = [], onPartidoGuardado = () =
             const closeModal = () => {
                 modal.style.display = "none";
                 formPartido.reset();
+                hiddenId.value = "";
+                modalTitle.textContent = "Programar Partido";
+                submitText.textContent = "Guardar";
                 refrescarOpciones();
                 setStatus("");
             };
 
-            window.abrirModalPartido = () => {
+            window.abrirModalPartido = (partido = null) => {
                 formPartido.reset();
+
+                if (!partido) {
+                    hiddenId.value = "";
+                    modalTitle.textContent = "Programar Partido";
+                    submitText.textContent = "Guardar";
+                } else {
+                    hiddenId.value = partido.id || "";
+                    modalTitle.textContent = "Editar Partido";
+                    submitText.textContent = "Actualizar";
+                    selectLocal.value = partido.idEquipoLocal ?? partido.equipoLocal?.id ?? "";
+                    selectVisitante.value = partido.idEquipoVisitante ?? partido.equipoVisitante?.id ?? "";
+                    formPartido.querySelector("#partido-fecha").value = partido.fecha || "";
+                    formPartido.querySelector("#partido-hora").value = partido.hora || "";
+                    formPartido.querySelector("#partido-goles-local").value = partido.golesLocal ?? 0;
+                    formPartido.querySelector("#partido-goles-visitante").value = partido.golesVisitante ?? 0;
+                    formPartido.querySelector("#partido-fase").value = partido.fase || "";
+                }
+
                 refrescarOpciones();
                 setStatus("");
                 modal.style.display = "flex";
@@ -136,6 +160,7 @@ export function inicializarModalPartido({ equipos = [], onPartidoGuardado = () =
                 event.preventDefault();
 
                 const payload = {
+                    id: hiddenId.value ? Number(hiddenId.value) : undefined,
                     idEquipoLocal: selectLocal.value ? Number(selectLocal.value) : null,
                     idEquipoVisitante: selectVisitante.value ? Number(selectVisitante.value) : null,
                     fecha: formPartido.querySelector("#partido-fecha").value,
@@ -155,16 +180,25 @@ export function inicializarModalPartido({ equipos = [], onPartidoGuardado = () =
                 setStatus("");
 
                 try {
-                    const resultado = await PartidoService.crearPartido(payload);
+                    let resultado;
+                    let mensajeExito;
+
+                    if (payload.id) {
+                        resultado = await PartidoService.editarPartido(payload);
+                        mensajeExito = resultado?.mensaje || "Partido actualizado correctamente.";
+                    } else {
+                        resultado = await PartidoService.crearPartido(payload);
+                        mensajeExito = resultado?.mensaje || "Partido programado correctamente.";
+                    }
 
                     if (resultado) {
                         formPartido.reset();
                         closeModal();
-                        mostrarToast(resultado?.mensaje || "Partido programado correctamente.", "success");
+                        mostrarToast(mensajeExito, "success");
                         await onPartidoGuardado();
                     }
                 } catch (error) {
-                    setStatus(error.message || "Ocurrió un error al programar el partido.", "error");
+                    setStatus(error.message || "Ocurrió un error al guardar el partido.", "error");
                 } finally {
                     setSavingState(false);
                 }

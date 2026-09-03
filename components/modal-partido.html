@@ -1,8 +1,10 @@
 <div id="modal-partido" class="modal" aria-modal="true" role="dialog">
     <div class="modal-content">
         <span class="close" aria-label="Cerrar modal">&times;</span>
-        <h2>Programar Partido</h2>
+        <h2 id="partido-modal-title">Programar Partido</h2>
         <form id="form-partido" novalidate>
+            <input type="hidden" id="partido-id">
+
             <label for="partido-local">Equipo Local:</label>
             <select id="partido-local" name="idEquipoLocal" required>
                 <option value="">Seleccione</option>

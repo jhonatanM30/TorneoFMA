@@ -134,11 +134,21 @@ document.addEventListener("DOMContentLoaded", async function () {
                         </div>
                     </div>
                     <div class="partido-actions">
+                        <button class="btn btn-small btn-editar" data-id="${partido.id ?? ""}">Editar</button>
                         <button class="btn btn-small btn-eliminar" data-id="${partido.id ?? ""}">Eliminar</button>
                     </div>
                 </article>
             `;
         }).join("");
+
+        partidosContainer.querySelectorAll(".btn-editar").forEach((button) => {
+            button.addEventListener("click", () => {
+                const partido = partidos.find((item) => String(item.id) === String(button.dataset.id));
+                if (partido && window.abrirModalPartido) {
+                    window.abrirModalPartido(partido);
+                }
+            });
+        });
 
         partidosContainer.querySelectorAll(".btn-eliminar").forEach((button) => {
             button.addEventListener("click", async () => {

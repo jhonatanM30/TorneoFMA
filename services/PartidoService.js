@@ -52,6 +52,22 @@ export class PartidoService {
         }
     }
 
+    // FRONTEND_VISION.md Fase3: "un partido se deberia permitir Editar".
+    static async editarPartido(partidoDTO) {
+        try {
+            const response = await fetch(API_URL, {
+                method: "PUT",
+                headers: construirHeaders(),
+                body: JSON.stringify(partidoDTO)
+            });
+
+            return await parsearRespuesta(response, "Actualizar partido");
+        } catch (error) {
+            console.error("Error al actualizar partido:", error);
+            throw error;
+        }
+    }
+
     static async eliminarPartido(id) {
         try {
             const response = await fetch(`${API_URL}/${id}`, {
