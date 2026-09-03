@@ -1,0 +1,32 @@
+<div id="modal-sorteo" class="modal" aria-modal="true" role="dialog">
+    <div class="modal-content modal-content--ancho">
+        <span class="close" aria-label="Cerrar modal">&times;</span>
+        <h2>Sorteo de partidos</h2>
+        <p class="modal-help">
+            Elige los equipos que participan y presiona "Sortear": se
+            emparejan al azar (si el número de equipos es impar, uno queda
+            libre en esta ronda). Después indica fecha, hora y fase para
+            cada partido resultante antes de guardarlos.
+        </p>
+
+        <div id="sorteo-paso-equipos">
+            <div id="sorteo-lista-equipos" class="sorteo-lista-equipos"></div>
+            <div id="sorteo-form-status" class="form-status" aria-live="polite"></div>
+            <div class="modal-buttons">
+                <button type="button" id="sorteo-cancelar-btn" class="btn-secundario">Cancelar</button>
+                <button type="button" id="sorteo-sortear-btn">Sortear</button>
+            </div>
+        </div>
+
+        <form id="sorteo-form-partidos" class="sorteo-form-partidos" hidden>
+            <div id="sorteo-parejas"></div>
+            <div id="sorteo-form-status-2" class="form-status" aria-live="polite"></div>
+            <div class="modal-buttons">
+                <button type="button" id="sorteo-volver-btn" class="btn-secundario">Volver</button>
+                <button id="sorteo-guardar-btn" type="submit">
+                    <span id="sorteo-guardar-text">Guardar sorteo</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

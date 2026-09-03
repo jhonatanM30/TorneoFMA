@@ -156,6 +156,13 @@
     opacity: 0.85;
 }
 
+/* Variante ancha para modales con formularios mas complejos (carga en
+   lote de jugadores, sorteo de partidos). Vive aca (no en css/jugadores.css)
+   porque la usan modales de mas de una pagina. */
+.modal-content--ancho {
+    max-width: 640px;
+}
+
 /* Botón Cancelar explícito junto a Guardar (además de la X de cerrar),
    pedido por FRONTEND_API_PROMPT.md en cada formulario. */
 .modal-buttons {

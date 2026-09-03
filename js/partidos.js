@@ -2,6 +2,7 @@ import { EquipoService } from "../services/EquipoService.js";
 import { mostrarToast } from "./toast.js";
 import { PartidoService } from "../services/PartidoService.js";
 import { inicializarModalPartido } from "./modalPartido.js";
+import { inicializarModalSorteo } from "./modalSorteo.js";
 
 let partidosCache = [];
 let equiposCache = [];
@@ -21,6 +22,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     const filtroFechaHasta = document.getElementById("filtro-fecha-hasta");
     const btnOrdenFecha = document.getElementById("btn-orden-fecha");
     const btnAgregarPartido = document.getElementById("btn-agregar-partido");
+    const btnSorteoPartidos = document.getElementById("btn-sorteo-partidos");
     let ordenDescendente = false;
 
     if (!partidosContainer) {
@@ -42,9 +44,22 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     });
 
+    inicializarModalSorteo({
+        equipos: equiposCache,
+        onSorteoGuardado: async () => {
+            await cargarPartidos();
+        }
+    });
+
     btnAgregarPartido.addEventListener("click", () => {
         if (window.abrirModalPartido) {
             window.abrirModalPartido();
+        }
+    });
+
+    btnSorteoPartidos.addEventListener("click", () => {
+        if (window.abrirModalSorteo) {
+            window.abrirModalSorteo();
         }
     });
 

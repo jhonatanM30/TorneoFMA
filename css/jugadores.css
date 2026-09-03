@@ -207,10 +207,6 @@ h2{
 }
 
 /* ===== Modal de carga en lote ===== */
-.modal-content--ancho {
-    max-width: 640px;
-}
-
 .lote-filas {
     display: flex;
     flex-direction: column;
