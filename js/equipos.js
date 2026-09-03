@@ -1,41 +1,153 @@
+import { EquipoService } from "../services/EquipoService.js";
+import { mostrarToast } from "./toast.js";
 import { inicializarModalEquipo } from "./modalEquipo.js";
 
+let equiposCache = [];
 
-document.addEventListener("DOMContentLoaded", function () {
+const DEFAULT_TEAM_IMAGE = "assets/comark.jpg";
+
+document.addEventListener("DOMContentLoaded", async function () {
     const equiposContainer = document.querySelector(".equipos-container");
+    const searchInput = document.getElementById("buscar-equipo");
+    const btnAgregarEquipo = document.querySelector(".botones .btn:last-child");
 
     if (!equiposContainer) {
         console.error("No se encontró el contenedor de equipos. Verifica que el ID 'equipos-container' esté en equipos.html");
         return;
     }
 
-    cargarEquipos(equiposContainer);
-    inicializarModalEquipo(); //  Llamamos a la inicialización del modal
-});
-
-function cargarEquipos(equiposContainer) {
-    const equipos = [
-        { nombre: "Equipo 1", dt: "DT 1", img: "assets/comark.jpg" },
-        { nombre: "Equipo 2", dt: "DT 2", img: "assets/comark.jpg" },
-        { nombre: "Equipo 3", dt: "DT 3", img: "assets/comark.jpg" },
-        { nombre: "Equipo 4", dt: "DT 4", img: "assets/comark.jpg" },
-        { nombre: "Equipo 5", dt: "DT 5", img: "assets/comark.jpg" }
-    ];
-
-    let equiposHTML = "";
-    equipos.forEach(equipo => {
-        equiposHTML += `
-            <div class="equipo-card">
-                <img src="${equipo.img}" alt="${equipo.nombre}">
-                <h3>${equipo.nombre}</h3>
-                <p>DT: ${equipo.dt}</p>
-                <button class="ver-jugadores-btn">Ver jugadores</button>
-                <button class="ver-jugadores-btn">Editar</button>
-            </div>
-        `;
+    inicializarModalEquipo({
+        onEquipoGuardado: async () => {
+            await cargarEquipos(equiposContainer);
+        }
     });
 
-    equiposContainer.innerHTML = equiposHTML;
+    if (btnAgregarEquipo) {
+        btnAgregarEquipo.addEventListener("click", () => {
+            if (window.abrirModalEquipo) {
+                window.abrirModalEquipo();
+            }
+        });
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener("input", async (event) => {
+            const query = event.target.value.trim();
+
+            if (!query) {
+                await cargarEquipos(equiposContainer);
+                return;
+            }
+
+            await buscarEquiposPorNombre(equiposContainer, query);
+        });
+    }
+
+    await cargarEquipos(equiposContainer);
+});
+
+async function cargarEquipos(equiposContainer) {
+    equiposContainer.innerHTML = "<div class='loading-state'>Cargando equipos...</div>";
+
+    try {
+        const equipos = await EquipoService.obtenerEquipos();
+        equiposCache = Array.isArray(equipos) ? equipos : [];
+        renderEquipos(equiposContainer, equiposCache);
+    } catch (error) {
+        equiposContainer.innerHTML = `
+            <div class="empty-state">
+                No se pudieron cargar los equipos.<br>
+                ${error.message || "Intenta nuevamente más tarde."}
+            </div>
+        `;
+    }
+}
+
+async function buscarEquiposPorNombre(equiposContainer, nombre) {
+    try {
+        const equipos = await EquipoService.buscarEquiposPorNombre(nombre);
+        renderEquipos(equiposContainer, Array.isArray(equipos) ? equipos : []);
+    } catch (error) {
+        equiposContainer.innerHTML = `
+            <div class="empty-state">
+                No se encontraron equipos para la búsqueda indicada.
+            </div>
+        `;
+    }
+}
+
+function renderEquipos(equiposContainer, equipos) {
+    if (!Array.isArray(equipos) || equipos.length === 0) {
+        equiposContainer.innerHTML = `
+            <div class="empty-state">
+                No hay equipos registrados.
+            </div>
+        `;
+        return;
+    }
+
+    equiposContainer.innerHTML = equipos.map((equipo) => {
+        const nombre = equipo.nombre || "Equipo sin nombre";
+        const directorTecnico = equipo.directorTecnico || "Sin director técnico";
+        const titulos = equipo.titulos ?? 0;
+        const tipo = equipo.tipoClasificacion || "Sin clasificación";
+        const imagen = equipo.imagenUrl || DEFAULT_TEAM_IMAGE;
+
+        return `
+            <article class="equipo-card" data-id="${equipo.id ?? ""}">
+                <img src="${imagen}" alt="${nombre}" onerror="this.src='${DEFAULT_TEAM_IMAGE}'">
+                <h3>${nombre}</h3>
+                <p><strong>DT:</strong> ${directorTecnico}</p>
+                <p><strong>Títulos:</strong> ${titulos}</p>
+                <p><strong>Clasificación:</strong> ${tipo}</p>
+                <div class="equipo-actions">
+                    <button class="btn btn-small btn-detalle" data-id="${equipo.id ?? ""}">Detalle</button>
+                    <button class="btn btn-small btn-editar" data-id="${equipo.id ?? ""}">Editar</button>
+                    <button class="btn btn-small btn-eliminar" data-id="${equipo.id ?? ""}">Eliminar</button>
+                </div>
+            </article>
+        `;
+    }).join("");
+
+    equiposContainer.querySelectorAll(".btn-detalle").forEach((button) => {
+        button.addEventListener("click", () => {
+            const equipo = equipos.find((item) => String(item.id) === String(button.dataset.id));
+            if (!equipo) return;
+
+            const jugadores = Array.isArray(equipo.jugadores) && equipo.jugadores.length > 0
+                ? equipo.jugadores.map((jugador) => `- ${jugador.nombre || "Jugador"}`).join("\n")
+                : "- Sin jugadores registrados";
+
+            alert(`Equipo: ${equipo.nombre}\nDirector técnico: ${equipo.directorTecnico || "Sin dato"}\nClasificación: ${equipo.tipoClasificacion || "Sin dato"}\n\nJugadores:\n${jugadores}`);
+        });
+    });
+
+    equiposContainer.querySelectorAll(".btn-editar").forEach((button) => {
+        button.addEventListener("click", () => {
+            const equipo = equipos.find((item) => String(item.id) === String(button.dataset.id));
+            if (equipo && window.abrirModalEquipo) {
+                window.abrirModalEquipo(equipo);
+            }
+        });
+    });
+
+    equiposContainer.querySelectorAll(".btn-eliminar").forEach((button) => {
+        button.addEventListener("click", async () => {
+            const equipo = equipos.find((item) => String(item.id) === String(button.dataset.id));
+            if (!equipo) return;
+
+            const confirmar = window.confirm(`¿Estás seguro de eliminar el equipo "${equipo.nombre}"?`);
+            if (!confirmar) return;
+
+            try {
+                await EquipoService.eliminarEquipo(equipo.id);
+                mostrarToast("Equipo eliminado correctamente.", "success");
+                await cargarEquipos(equiposContainer);
+            } catch (error) {
+                mostrarToast(error.message || "No se pudo eliminar el equipo", "error");
+            }
+        });
+    });
 }
 
 

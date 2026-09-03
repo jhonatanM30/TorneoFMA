@@ -1,22 +1,19 @@
 h2{
     font-size: 18px;
     font-family: 'Montserrat', sans-serif;
-    
 }
-
 
 /* ================== BOTONES ================== */
 .botones {
     display: flex;
-    flex-wrap: wrap; /* Permite que  se acomoden en filas */
-    justify-content: center;   
-    gap: 25px; /* Espacio entre ellos*/   
-    margin-top: 200px; /* Espacio entre el banner y los botones*/    
-
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 25px;
+    margin-top: 200px;
 }
 
 .btn {
-    background-color: #ffcc00; /* Amarillo dorado */
+    background-color: #ffcc00;
     color: black;
     border: none;
     padding: 12px 20px;
@@ -33,27 +30,49 @@ h2{
     transform: scale(1.05);
 }
 
+.btn-small {
+    padding: 8px 12px;
+    font-size: 12px;
+    margin: 5px 2px 0;
+}
+
+.equipos-toolbar {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    justify-content: center;
+    margin: 20px auto 0;
+}
+
+.equipos-toolbar input {
+    width: min(100%, 420px);
+    padding: 12px 16px;
+    border: 1px solid #d4d4d4;
+    border-radius: 999px;
+    font-size: 15px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
 /* Contenedor principal de equipos */
 .equipos-container {
     display: flex;
-    flex-wrap: wrap; /* Permite que las tarjetas se acomoden dinámicamente */
+    flex-wrap: wrap;
     justify-content: center;
-    gap: 25px; /* Espaciado entre tarjetas */
-    max-width: 900px;
-    margin-top: 30px; /* Espacio entre el banner y la sección de imágenes */
-    margin-bottom: 25px;
-    
+    gap: 25px;
+    max-width: 1000px;
+    margin: 30px auto 25px;
+    padding: 0 20px;
 }
 
 /* Tarjetas de equipo */
 .equipo-card {
-    background-color: white;
+    background-color: var(--color-surface);
     border-radius: 10px;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
     padding: 20px;
     text-align: center;
-    width: 25%;  /* Ocupa el 30% del ancho de la pantalla */
-    min-width: 200px; /* Tamaño mínimo para evitar que se achiquen demasiado */
+    width: 25%;
+    min-width: 200px;
     transition: transform 0.3s ease-in-out;
 }
 
@@ -61,37 +80,64 @@ h2{
     transform: scale(1.05);
 }
 
-/* Imágenes dentro de la tarjeta */
 .equipo-card img {
     width: 100%;
-    height: auto;
+    height: 150px;
+    object-fit: cover;
     border-radius: 10px;
     margin-bottom: 10px;
 }
 
-/* Botón dentro de la tarjeta */
-.ver-jugadores-btn {
-    background-color: #2ecc71;
-    color: white;
-    border: none;
-    padding: 8px 15px;
-    margin-top: 10px;
+.equipo-card h3 {
+    margin: 0 0 10px;
+    color: var(--color-text);
+}
+
+.equipo-card p {
+    margin: 6px 0;
     font-size: 14px;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: 0.3s;
+    color: #4b4b4b;
 }
 
-.ver-jugadores-btn:hover {
-    background-color: #27ae60;
+.equipo-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
 }
 
+.btn-detalle {
+    background-color: #3498db;
+    color: #fff;
+}
 
+.btn-editar {
+    background-color: #f39c12;
+    color: #fff;
+}
 
-/* Responsividad para ajustar a 3 por fila */
+.btn-eliminar {
+    background-color: #e74c3c;
+    color: #fff;
+}
+
+.loading-state,
+.empty-state {
+    width: 100%;
+    max-width: 900px;
+    text-align: center;
+    color: var(--color-text);
+    background: var(--color-surface);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px auto 0;
+    font-weight: 600;
+}
+
 @media (max-width: 1024px) {
     .equipo-card {
-        width: 45%;  /* Cambia a 2 tarjetas por fila en tablet */
+        width: 45%;
     }
 }
 
@@ -102,6 +148,6 @@ h2{
     }
 
     .equipo-card {
-        width: 90%;  /* En móvil, cada tarjeta ocupa casi todo el ancho */
+        width: 90%;
     }
 }

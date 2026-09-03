@@ -1,18 +1,40 @@
-<div id="modal-equipo" class="modal">
+<div id="modal-equipo" class="modal" aria-modal="true" role="dialog">
     <div class="modal-content">
-        <span class="close">&times;</span>
-        <h2>Agregar Nuevo Equipo</h2>
-        <form id="form-equipo">
+        <span class="close" aria-label="Cerrar modal">&times;</span>
+        <h2 id="equipo-modal-title">Agregar Nuevo Equipo</h2>
+        <form id="form-equipo" novalidate>
+            <input type="hidden" id="equipo-id">
+
             <label for="nombre">Nombre del Equipo:</label>
-            <input type="text" id="nombre" required>
+            <input type="text" id="nombre" name="nombre" maxlength="100" required>
 
             <label for="dt">Director Técnico:</label>
-            <input type="text" id="dt" required>
+            <input type="text" id="dt" name="directorTecnico" maxlength="100" required>
+
+            <label for="tipoClasificacion">Tipo de clasificación:</label>
+            <select id="tipoClasificacion" name="tipoClasificacion" required>
+                <option value="">Seleccione</option>
+                <option value="GRUPO">Grupo</option>
+                <option value="SEMIFINAL">Semifinal</option>
+                <option value="FINAL">Final</option>
+                <option value="REPECHAJE">Repechaje</option>
+                <option value="ELIMINATORIA">Eliminatoria</option>
+            </select>
 
             <label for="escudo">URL del Escudo:</label>
-            <input type="text" id="escudo">           
+            <input type="url" id="escudo" name="imagenUrl" placeholder="https://ejemplo.com/escudo.png">
 
-            <button type="submit">Guardar</button>
+            <label for="titulos">Campeonatos ganados:</label>
+            <input type="number" id="titulos" name="titulos" min="0" step="1" value="0">
+
+            <div id="equipo-form-status" class="form-status" aria-live="polite"></div>
+
+            <div class="modal-buttons">
+                <button type="button" id="equipo-cancelar-btn" class="btn-secundario">Cancelar</button>
+                <button id="equipo-submit-btn" type="submit">
+                <span id="equipo-submit-text">Guardar</span>
+            </button>
+            </div>
         </form>
     </div>
 </div>

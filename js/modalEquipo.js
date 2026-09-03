@@ -1,70 +1,172 @@
-import { EquipoDTO } from "../dto/EquipoDTO.js";
 import { EquipoService } from "../services/EquipoService.js";
+import { mostrarToast } from "./toast.js";
 
-export function inicializarModalEquipo() {
-    // Esperar a que el modal se cargue en el DOM
-    setTimeout(() => {
-        const modalContainer = document.getElementById("modal-container");
+const validarEquipo = (equipo) => {
+    const errores = [];
 
-        fetch("components/modal-equipo.html")
-            .then(response => response.text())
-            .then(html => {
-                modalContainer.innerHTML = html;
+    if (!equipo.nombre || equipo.nombre.trim().length < 2) {
+        errores.push("El campo nombre es requerido y debe tener al menos 2 caracteres.");
+    } else if (equipo.nombre.length > 100) {
+        errores.push("El campo nombre no puede superar los 100 caracteres.");
+    }
 
-                const modal = document.getElementById("modal-equipo");
-                const btnAbrirModal = document.querySelector(".botones .btn:nth-child(3)");
-                const btnCerrarModal = modal.querySelector(".close");
-                const formEquipo = modal.querySelector("#form-equipo");
+    if (!equipo.directorTecnico || equipo.directorTecnico.trim().length < 2) {
+        errores.push("El campo director técnico es requerido.");
+    } else if (equipo.directorTecnico.length > 100) {
+        errores.push("El campo director técnico no puede superar los 100 caracteres.");
+    }
 
-                if (!modal || !btnAbrirModal || !btnCerrarModal || !formEquipo) {
-                    console.error("El modal o los botones no se encontraron.");
+    if (!equipo.tipoClasificacion || equipo.tipoClasificacion.trim().length === 0) {
+        errores.push("Debe seleccionar un tipo de clasificación.");
+    } else if (equipo.tipoClasificacion.length > 50) {
+        errores.push("El tipo de clasificación no puede superar los 50 caracteres.");
+    }
+
+    if (equipo.imagenUrl && equipo.imagenUrl.trim()) {
+        const urlValida = /^(https?:\/\/)[^\s/$.?#].[\S]*$/i;
+        if (!urlValida.test(equipo.imagenUrl.trim())) {
+            errores.push("La URL de la imagen no es válida.");
+        }
+    }
+
+    if (equipo.titulos !== "" && equipo.titulos !== null && equipo.titulos !== undefined) {
+        const titulos = Number(equipo.titulos);
+        if (Number.isNaN(titulos) || titulos < 0) {
+            errores.push("Los títulos deben ser un número mayor o igual a 0.");
+        }
+    }
+
+    return errores;
+};
+
+export function inicializarModalEquipo({ onEquipoGuardado = () => {} } = {}) {
+    const modalContainer = document.getElementById("modal-container");
+
+    if (!modalContainer) {
+        console.warn("No se encontró el contenedor del modal");
+        return;
+    }
+
+    fetch("components/modal-equipo.html")
+        .then((response) => response.text())
+        .then((html) => {
+            modalContainer.innerHTML = html;
+
+            const modal = document.getElementById("modal-equipo");
+            const btnCerrarModal = modal.querySelector(".close");
+            const formEquipo = modal.querySelector("#form-equipo");
+            const formStatus = modal.querySelector("#equipo-form-status");
+            const modalTitle = modal.querySelector("#equipo-modal-title");
+            const submitButton = modal.querySelector("#equipo-submit-btn");
+            const submitText = modal.querySelector("#equipo-submit-text");
+            const hiddenId = modal.querySelector("#equipo-id");
+
+            if (!modal || !btnCerrarModal || !formEquipo) {
+                console.error("El modal o los botones no se encontraron.");
+                return;
+            }
+
+            modal.style.display = "none";
+
+            const setStatus = (message, type = "info") => {
+                if (!formStatus) return;
+                formStatus.textContent = message || "";
+                formStatus.className = `form-status ${type}`;
+            };
+
+            const setSavingState = (isSaving) => {
+                if (!submitButton || !submitText) return;
+                submitButton.disabled = isSaving;
+                submitButton.classList.toggle("is-loading", isSaving);
+                submitText.textContent = isSaving ? "Guardando..." : "Guardar";
+            };
+
+            const closeModal = () => {
+                modal.style.display = "none";
+                formEquipo.reset();
+                hiddenId.value = "";
+                modalTitle.textContent = "Agregar Nuevo Equipo";
+                submitText.textContent = "Guardar";
+                setStatus("");
+            };
+
+            window.abrirModalEquipo = (equipo = null) => {
+                if (!equipo) {
+                    modalTitle.textContent = "Agregar Nuevo Equipo";
+                    submitText.textContent = "Guardar";
+                    hiddenId.value = "";
+                    formEquipo.reset();
+                } else {
+                    modalTitle.textContent = "Editar Equipo";
+                    submitText.textContent = "Actualizar";
+                    hiddenId.value = equipo.id || "";
+                    formEquipo.querySelector("#nombre").value = equipo.nombre || "";
+                    formEquipo.querySelector("#dt").value = equipo.directorTecnico || "";
+                    formEquipo.querySelector("#escudo").value = equipo.imagenUrl || "";
+                    formEquipo.querySelector("#titulos").value = equipo.titulos ?? 0;
+                    formEquipo.querySelector("#tipoClasificacion").value = equipo.tipoClasificacion || "";
+                }
+
+                setStatus("");
+                modal.style.display = "flex";
+            };
+
+            btnCerrarModal.addEventListener("click", closeModal);
+            const btnCancelarEquipo = modal.querySelector("#equipo-cancelar-btn");
+            btnCancelarEquipo.addEventListener("click", closeModal);
+
+            window.addEventListener("click", (event) => {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+
+            formEquipo.addEventListener("submit", async (event) => {
+                event.preventDefault();
+
+                const payload = {
+                    id: hiddenId.value ? Number(hiddenId.value) : undefined,
+                    nombre: formEquipo.querySelector("#nombre").value.trim(),
+                    directorTecnico: formEquipo.querySelector("#dt").value.trim(),
+                    imagenUrl: formEquipo.querySelector("#escudo").value.trim(),
+                    titulos: formEquipo.querySelector("#titulos").value === "" ? 0 : Number(formEquipo.querySelector("#titulos").value),
+                    tipoClasificacion: formEquipo.querySelector("#tipoClasificacion").value.trim()
+                };
+
+                const errores = validarEquipo(payload);
+                if (errores.length > 0) {
+                    setStatus(errores[0], "error");
                     return;
                 }
 
-                modal.style.display = "none"; 
+                setSavingState(true);
+                setStatus("");
 
-                // 🔹 Abrir modal
-                btnAbrirModal.addEventListener("click", () => {                  
-                    modal.style.display = "flex";
-                });
+                try {
+                    let resultado;
 
-                // 🔹 Cerrar modal
-                btnCerrarModal.addEventListener("click", () => {
-                    modal.style.display = "none";
-                });
-
-                // 🔹 Cerrar modal si se hace clic fuera
-                window.addEventListener("click", (e) => {
-                    if (e.target === modal) {
-                        modal.style.display = "none";
+                    let mensajeExito;
+                    if (payload.id) {
+                        resultado = await EquipoService.editarEquipo(payload);
+                        mensajeExito = resultado?.mensaje || "Equipo actualizado correctamente.";
+                    } else {
+                        resultado = await EquipoService.crearEquipo(payload);
+                        mensajeExito = resultado?.mensaje || "Equipo creado correctamente.";
                     }
-                });
-
-                // 🔹 Manejar envío del formulario
-                formEquipo.addEventListener("submit", async (e) => {
-                    e.preventDefault();
-
-                    let equipoDTO = {...EquipoDTO}
-                    equipoDTO = {
-                        nombre: formEquipo.querySelector("#nombre").value,
-                        dt: formEquipo.querySelector("#dt").value,
-                        escudo: formEquipo.querySelector("#escudo").value
-                    };
-
-                    console.log("Enviando equipo:", equipoDTO);
-
-                    const resultado = await EquipoService.crearEquipo(equipoDTO);
 
                     if (resultado) {
-                        alert("Equipo agregado correctamente");
-                        modal.style.display = "none";
                         formEquipo.reset();
-                    } else {
-                        alert("Error al agregar equipo");
+                        closeModal();
+                        mostrarToast(mensajeExito, "success");
+                        await onEquipoGuardado();
                     }
-                });
-
-            })
-            .catch(error => console.error("Error cargando el modal:", error));
-    }, 1000); // Esperamos 1 segundo para asegurarnos de que se ha insertado en el DOM
+                } catch (error) {
+                    setStatus(error.message || "Ocurrió un error al guardar el equipo.", "error");
+                } finally {
+                    setSavingState(false);
+                }
+            });
+        })
+        .catch((error) => console.error("Error cargando el modal:", error));
 }
+

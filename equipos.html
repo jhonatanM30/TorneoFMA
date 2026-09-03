@@ -8,18 +8,19 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">    
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/equipos.css">
-    <link rel="stylesheet" href="css/modal-crear-equipo.css">
+    <link rel="stylesheet" href="css/modales.css">
     
+    <script src="js/config.js"></script>
     <script defer src="js/app.js"></script>
     <script defer type="module" src="js/equipos.js"></script>
 </head>
-<body>
+<body data-page="equipos">
     <!-- Contenedor del menú -->
     <div id="menu-container"></div>
 
     <!-- Contenido de equipos -->
     <div class="main-content">
-        <header class="banner">
+        <header class="banner banner--equipos">
             <h2>EQUIPOS PARTICIPANTES</h2>
             <p class="banner-subtitle">Pasión y amistad en cada partido</p>
             <p class="banner-date">Edición 2025 - Inicia el 26 de Diciembre</p>
@@ -29,10 +30,14 @@
             <button class="btn">Sorteo de partidos</button>
             <button class="btn">Ver Equipos en Repechaje</button>
             <button class="btn">Agregar un nuevo equipo</button>
-        </div>       
+        </div>
+
+        <div class="equipos-toolbar">
+            <input id="buscar-equipo" type="search" placeholder="Buscar equipo por nombre" aria-label="Buscar equipo por nombre">
+        </div>
 
         <section class="equipos-container">
-            <!-- Las tarjetas de equipos se generarán dinámicamente -->
+            <div class="loading-state">Cargando equipos...</div>
         </section>
     </div>
     <div id="modal-container"></div>
