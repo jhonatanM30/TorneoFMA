@@ -1,14 +1,17 @@
  <!-- Menú lateral -->
- <nav id="sidebar" class="sidebar">  
+ <nav id="sidebar" class="sidebar">
     <ul>
-        <li><a href="index.html"><i class="fas fa-home"></i> Inicio</a></li>
-        <li><a href="equipos.html"><i class="fas fa-users"></i> Equipos</a></li>
-        <li><a href="#"><i class="fas fa-futbol"></i> Partidos</a></li>
-        <li><a href="#"><i class="fas fa-chart-bar"></i> Estadísticas</a></li>
-        <li><a href="#"><i class="fas fa-list-ol"></i> Resultados</a></li>
-        <li><a href="#"><i class="fas fa-trophy"></i> Tabla de posiciones</a></li>
-        <li><a href="#"><i class="fas fa-cog"></i> Configuración</a></li>
+        <li><a href="index.html" data-page="index"><i class="fas fa-home"></i> Inicio</a></li>
+        <li><a href="equipos.html" data-page="equipos"><i class="fas fa-users"></i> Equipos</a></li>
+        <li><a href="jugadores.html" data-page="jugadores"><i class="fas fa-person-running"></i> Jugadores</a></li>
+        <li><a href="partidos.html" data-page="partidos"><i class="fas fa-futbol"></i> Partidos</a></li>
+        <li><a href="alineaciones.html" data-page="alineaciones"><i class="fas fa-list-check"></i> Alineaciones</a></li>
+        <li><a href="estadisticas.html" data-page="estadisticas"><i class="fas fa-chart-bar"></i> Estadísticas</a></li>
     </ul>
+
+    <button id="btn-tema" class="btn-tema" type="button" aria-label="Cambiar entre modo claro y oscuro">
+        <i class="fas fa-moon"></i> <span id="btn-tema-texto">Modo oscuro</span>
+    </button>
 </nav>
 
 

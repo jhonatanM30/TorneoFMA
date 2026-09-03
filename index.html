@@ -7,9 +7,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <script src="js/config.js"></script>
     <script defer src="js/app.js"></script>
+    <!-- Chart.js (bonus "Gráficos" de FRONTEND_API_PROMPT.md), cargado antes
+         del módulo que lo usa; expone el global window.Chart. -->
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.1/chart.umd.min.js"></script>
+    <script defer type="module" src="js/dashboard.js"></script>
 </head>
-<body>
+<body data-page="index">
    
  <!-- Aquí se cargará dinámicamente el menú -->
  <div id="menu-container"></div>
@@ -18,11 +24,50 @@
     <div class="main-content">
         
         <!-- Banner superior -->
-        <header class="banner">
+        <header class="banner banner--hero">
             <h2>⚽ COPA DE FÚTBOL MÁS QUE AMIGOS 🏆</h2>
             <p class="banner-subtitle">Pasión y amistad en cada partido</p>
             <p class="banner-date">Edición 2025 - Inicia el 26 de Diciembre</p>
         </header>
+
+        <!-- Resumen del torneo -->
+        <section class="dashboard-stats">
+            <article class="stat-card">
+                <i class="fas fa-shield-halved"></i>
+                <span class="stat-value" id="stat-equipos">-</span>
+                <span class="stat-label">Equipos</span>
+            </article>
+            <article class="stat-card">
+                <i class="fas fa-person-running"></i>
+                <span class="stat-value" id="stat-jugadores">-</span>
+                <span class="stat-label">Jugadores</span>
+            </article>
+            <article class="stat-card">
+                <i class="fas fa-futbol"></i>
+                <span class="stat-value" id="stat-partidos">-</span>
+                <span class="stat-label">Partidos</span>
+            </article>
+            <article class="stat-card">
+                <i class="fas fa-chart-simple"></i>
+                <span class="stat-value" id="stat-estadisticas">-</span>
+                <span class="stat-label">Estadísticas registradas</span>
+            </article>
+        </section>
+
+        <h3 class="section-title">En números</h3>
+
+        <section class="dashboard-charts">
+            <article class="chart-card">
+                <h4>Jugadores por posición</h4>
+                <canvas id="chart-posiciones"></canvas>
+            </article>
+            <article class="chart-card">
+                <h4>Goles por equipo</h4>
+                <canvas id="chart-goles-equipo"></canvas>
+            </article>
+        </section>
+
+        <h3 class="section-title">Galería del torneo</h3>
 
         <!-- Imagen principal -->
         <section class="main-image">
