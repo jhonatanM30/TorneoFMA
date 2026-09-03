@@ -1,0 +1,35 @@
+<div id="modal-alineacion" class="modal" aria-modal="true" role="dialog">
+    <div class="modal-content">
+        <span class="close" aria-label="Cerrar modal">&times;</span>
+        <h2>Alinear jugador</h2>
+        <p class="modal-help">
+            El backend valida que el jugador no esté repetido en el mismo
+            partido y que un equipo no supere 11 titulares.
+        </p>
+        <form id="form-alineacion" novalidate>
+            <label for="alineacion-partido">Partido:</label>
+            <select id="alineacion-partido" name="idPartido" required>
+                <option value="">Seleccione un partido</option>
+            </select>
+
+            <label for="alineacion-jugador">Jugador:</label>
+            <select id="alineacion-jugador" name="idJugador" required disabled>
+                <option value="">Seleccione un partido primero</option>
+            </select>
+
+            <label class="check-label">
+                <input type="checkbox" id="alineacion-titular" name="titular">
+                Titular (si no se marca, queda como suplente)
+            </label>
+
+            <div id="alineacion-form-status" class="form-status" aria-live="polite"></div>
+
+            <div class="modal-buttons">
+                <button type="button" id="alineacion-cancelar-btn" class="btn-secundario">Cancelar</button>
+                <button id="alineacion-submit-btn" type="submit">
+                <span id="alineacion-submit-text">Guardar</span>
+            </button>
+            </div>
+        </form>
+    </div>
+</div>

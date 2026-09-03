@@ -1,0 +1,46 @@
+<div id="modal-partido" class="modal" aria-modal="true" role="dialog">
+    <div class="modal-content">
+        <span class="close" aria-label="Cerrar modal">&times;</span>
+        <h2>Programar Partido</h2>
+        <form id="form-partido" novalidate>
+            <label for="partido-local">Equipo Local:</label>
+            <select id="partido-local" name="idEquipoLocal" required>
+                <option value="">Seleccione</option>
+            </select>
+
+            <label for="partido-visitante">Equipo Visitante:</label>
+            <select id="partido-visitante" name="idEquipoVisitante" required>
+                <option value="">Seleccione</option>
+            </select>
+
+            <label for="partido-fecha">Fecha:</label>
+            <input type="date" id="partido-fecha" name="fecha" required>
+
+            <label for="partido-hora">Hora:</label>
+            <input type="time" id="partido-hora" name="hora" required>
+
+            <label for="partido-goles-local">Goles Local:</label>
+            <input type="number" id="partido-goles-local" name="golesLocal" min="0" step="1" value="0" required>
+
+            <label for="partido-goles-visitante">Goles Visitante:</label>
+            <input type="number" id="partido-goles-visitante" name="golesVisitante" min="0" step="1" value="0" required>
+
+            <label for="partido-fase">Fase:</label>
+            <select id="partido-fase" name="fase">
+                <option value="FASE_DE_GRUPOS">Fase de grupos</option>
+                <option value="REPECHAJE">Repechaje</option>
+                <option value="ELIMINACION_DIRECTA">Eliminación directa</option>
+                <option value="FINAL">Final</option>
+            </select>
+
+            <div id="partido-form-status" class="form-status" aria-live="polite"></div>
+
+            <div class="modal-buttons">
+                <button type="button" id="partido-cancelar-btn" class="btn-secundario">Cancelar</button>
+                <button id="partido-submit-btn" type="submit">
+                <span id="partido-submit-text">Guardar</span>
+            </button>
+            </div>
+        </form>
+    </div>
+</div>
