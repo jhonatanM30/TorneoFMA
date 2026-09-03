@@ -97,15 +97,29 @@ export function inicializarModalJugadorLote({ equipos = [], onLoteGuardado = () 
                 modal.style.display = "flex";
             };
 
-            btnCerrarModal.addEventListener("click", closeModal);
-            const btnCancelarLote = modal.querySelector("#lote-cancelar-btn");
-            btnCancelarLote.addEventListener("click", closeModal);
+            // FRONTEND_VISION.md Fase2: "si por error toco fuera del modal se
+            // cierra y al volver pierdo la información ya diligenciada". A
+            // diferencia de los modales de un solo registro, este formulario
+            // puede tener hasta 50 filas cargadas: se cierra solo con la X o
+            // con Cancelar (que sí confirma si hay datos sin guardar), nunca
+            // por un clic accidental fuera del modal.
+            const haySinGuardar = () => {
+                return Array.from(filasContainer.querySelectorAll(".lote-fila")).some((fila) => {
+                    return ["lote-nombre", "lote-edad", "lote-dorsal"].some((clase) => fila.querySelector(`.${clase}`).value.trim() !== "")
+                        || fila.querySelector(".lote-posicion").value !== "";
+                });
+            };
 
-            window.addEventListener("click", (event) => {
-                if (event.target === modal) {
-                    closeModal();
+            const cerrarConConfirmacion = () => {
+                if (haySinGuardar() && !window.confirm("Vas a perder los jugadores que ya escribiste en este lote. ¿Cerrar de todas formas?")) {
+                    return;
                 }
-            });
+                closeModal();
+            };
+
+            btnCerrarModal.addEventListener("click", cerrarConConfirmacion);
+            const btnCancelarLote = modal.querySelector("#lote-cancelar-btn");
+            btnCancelarLote.addEventListener("click", cerrarConConfirmacion);
 
             form.addEventListener("submit", async (event) => {
                 event.preventDefault();
