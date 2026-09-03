@@ -21,6 +21,14 @@
     background: var(--color-surface);
     width: 100%;
     max-width: 420px;
+    /* FRONTEND_VISION.md Fase2/Fase3: con formularios largos (lote de
+       jugadores, programar partido) el modal crecia mas alto que la
+       pantalla y los botones Guardar/Cancelar del fondo quedaban fuera de
+       vista, sin forma de hacer scroll para llegar a ellos. Se limita la
+       altura y se habilita scroll interno en vez de dejar que crezca sin
+       limite. */
+    max-height: 90vh;
+    overflow-y: auto;
     padding: 24px 20px 20px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
