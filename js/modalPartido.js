@@ -69,9 +69,31 @@ export function inicializarModalPartido({ equipos = [], onPartidoGuardado = () =
             // rechaza igual si el navegador no soporta el date picker nativo.
             inputFecha.min = new Date().toISOString().slice(0, 10);
 
-            const opcionesEquipos = equipos.map((equipo) => `<option value="${equipo.id}">${equipo.nombre}</option>`).join("");
-            selectLocal.innerHTML = '<option value="">Seleccione</option>' + opcionesEquipos;
-            selectVisitante.innerHTML = '<option value="">Seleccione</option>' + opcionesEquipos;
+            // FRONTEND_VISION.md Fase3: "se debe permitir seleccionar
+            // diferentes equipos entre local y visitante ANTES de continuar
+            // con la demas informacion, nunca que sean los mismos equipos".
+            // Antes solo se validaba al enviar el formulario; ahora, en
+            // cuanto se elige un equipo en un select, se le quita esa opcion
+            // al otro select para que ni siquiera se pueda elegir el mismo.
+            const refrescarOpciones = () => {
+                const idLocal = selectLocal.value;
+                const idVisitante = selectVisitante.value;
+
+                selectLocal.innerHTML = '<option value="">Seleccione</option>' +
+                    equipos.filter((equipo) => String(equipo.id) !== idVisitante)
+                        .map((equipo) => `<option value="${equipo.id}">${equipo.nombre}</option>`).join("");
+
+                selectVisitante.innerHTML = '<option value="">Seleccione</option>' +
+                    equipos.filter((equipo) => String(equipo.id) !== idLocal)
+                        .map((equipo) => `<option value="${equipo.id}">${equipo.nombre}</option>`).join("");
+
+                selectLocal.value = idLocal;
+                selectVisitante.value = idVisitante;
+            };
+
+            refrescarOpciones();
+            selectLocal.addEventListener("change", refrescarOpciones);
+            selectVisitante.addEventListener("change", refrescarOpciones);
 
             modal.style.display = "none";
 
@@ -89,11 +111,13 @@ export function inicializarModalPartido({ equipos = [], onPartidoGuardado = () =
             const closeModal = () => {
                 modal.style.display = "none";
                 formPartido.reset();
+                refrescarOpciones();
                 setStatus("");
             };
 
             window.abrirModalPartido = () => {
                 formPartido.reset();
+                refrescarOpciones();
                 setStatus("");
                 modal.style.display = "flex";
             };
