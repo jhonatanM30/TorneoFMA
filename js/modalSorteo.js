@@ -67,7 +67,19 @@ export function inicializarModalSorteo({ equipos = [], onSorteoGuardado = () => 
                 resetModal();
             };
 
+            // Auditoria (hallazgo): el modal no deberia ni siquiera
+            // mostrarse si no se cumplen las condiciones minimas para un
+            // sorteo (al menos 3 equipos registrados en el sistema). Antes
+            // este chequeo solo ocurria al presionar "Sortear" DENTRO del
+            // modal ya abierto; ahora se corta antes de abrirlo.
             window.abrirModalSorteo = () => {
+                if (equipos.length < 3) {
+                    mostrarToast(
+                        "Se necesitan al menos 3 equipos registrados para poder sortear partidos (con 2, usa \"Programar partido\").",
+                        "error"
+                    );
+                    return;
+                }
                 resetModal();
                 modal.style.display = "flex";
             };
@@ -140,15 +152,43 @@ export function inicializarModalSorteo({ equipos = [], onSorteoGuardado = () => 
                 event.preventDefault();
 
                 const fieldsets = Array.from(parejasContainer.querySelectorAll(".sorteo-pareja"));
+
+                // Auditoria (hallazgo): "al darle guardar no valida que la
+                // informacion necesaria este completa". El formulario
+                // dependia solo de los atributos HTML "required" (sin
+                // novalidate), lo cual es inconsistente con el resto del
+                // proyecto (que usa validacion propia vía setStatus) y no
+                // es confiable si el navegador no llega a interceptar el
+                // submit (por ejemplo si no quedan fieldsets porque no se
+                // sorteó nada). Ahora se valida explícitamente en JS,
+                // marcando los campos incompletos y evitando el envío.
+                fieldsets.forEach((fieldset) => {
+                    fieldset.querySelector(".sorteo-fecha").classList.remove("input-invalido");
+                    fieldset.querySelector(".sorteo-hora").classList.remove("input-invalido");
+                });
+
+                if (fieldsets.length === 0) {
+                    setStatus(statusParejas, "No hay partidos para guardar: vuelve al paso anterior y sortea de nuevo.", "error");
+                    return;
+                }
+
                 const datos = fieldsets.map((fieldset, indice) => ({
                     pareja: parejasActuales[indice],
+                    fechaInput: fieldset.querySelector(".sorteo-fecha"),
+                    horaInput: fieldset.querySelector(".sorteo-hora"),
                     fecha: fieldset.querySelector(".sorteo-fecha").value,
                     hora: fieldset.querySelector(".sorteo-hora").value,
                     fase: fieldset.querySelector(".sorteo-fase").value
                 }));
 
-                if (datos.some((dato) => !dato.fecha || !dato.hora)) {
-                    setStatus(statusParejas, "Completa fecha y hora de todos los partidos del sorteo.", "error");
+                const incompletos = datos.filter((dato) => !dato.fecha || !dato.hora);
+                if (incompletos.length > 0) {
+                    incompletos.forEach((dato) => {
+                        if (!dato.fecha) dato.fechaInput.classList.add("input-invalido");
+                        if (!dato.hora) dato.horaInput.classList.add("input-invalido");
+                    });
+                    setStatus(statusParejas, "Completa fecha y hora de todos los partidos del sorteo antes de guardar.", "error");
+                    incompletos[0].fechaInput.focus();
                     return;
                 }
 

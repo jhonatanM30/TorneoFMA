@@ -144,6 +144,14 @@
     font-weight: 600;
 }
 
+/* Hallazgo: validacion explicita en JS (en vez de depender solo de
+   'required' nativo) para formularios que arman sus campos dinamicamente,
+   ej. modal-sorteo.html. Resalta el campo que falto al intentar guardar. */
+.input-invalido {
+    border-color: #b22222 !important;
+    outline: 1px solid #b22222;
+}
+
 .modal-content button {
     background: #28a745;
     color: white;
