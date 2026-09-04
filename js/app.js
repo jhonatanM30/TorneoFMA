@@ -60,29 +60,43 @@ function inicializarInterruptorTema() {
     });
 }
 
-// FRONTEND_VISION.md Fase7: botón del menú para (re)indicar el rol de
-// Director Técnico. El prompt en sí vive en js/config.js
-// (window.MQA_preguntarRolDirectorTecnico) porque ese archivo es el dueño
-// de window.APP_CONFIG; acá solo se refleja el estado actual en el botón.
+// FRONTEND_VISION.md Fase7 + hallazgo post-despliegue: botón para
+// (re)indicar el rol de Director Técnico. El prompt en sí vive en
+// js/config.js (window.MQA_preguntarRolDirectorTecnico) porque ese
+// archivo es el dueño de window.APP_CONFIG; acá solo se refleja el
+// estado actual en el botón.
+//
+// Antes este botón vivía DENTRO del menú lateral colapsable (había que
+// abrir el menú, en móvil, para encontrarlo) y competía por espacio con
+// el interruptor de modo oscuro. Ahora es un botón flotante fuera del
+// menú (components/menu.html, clase .btn-rol-flotante), visible en toda
+// página y en todo momento sin depender de abrir el menú ni de recargar;
+// además cambia de color/ícono según el rol activo, para que el estado
+// sea evidente de un vistazo (no solo el texto).
 function inicializarBotonRol() {
-    const boton = document.getElementById("btn-rol");
-    const texto = document.getElementById("btn-rol-texto");
+    const boton = document.getElementById("btn-rol-flotante");
+    const texto = document.getElementById("btn-rol-flotante-texto");
     if (!boton) return;
 
-    const actualizarTexto = () => {
+    const actualizarEstado = () => {
         const esDirectorTecnico = Boolean(window.APP_CONFIG?.DIRECTOR_TECNICO_KEY);
         if (texto) {
-            texto.textContent = esDirectorTecnico ? "Rol: Director Técnico" : "Rol: Consulta";
+            texto.textContent = esDirectorTecnico ? "Director Técnico" : "Consulta";
         }
+        boton.classList.toggle("es-director-tecnico", esDirectorTecnico);
+        boton.querySelector("i").className = esDirectorTecnico ? "fas fa-user-check" : "fas fa-user-shield";
+        boton.title = esDirectorTecnico
+            ? "Estás como Director Técnico. Click para cambiar de rol."
+            : "Estás en modo consulta. Click para ingresar como Director Técnico.";
     };
 
-    actualizarTexto();
+    actualizarEstado();
 
     boton.addEventListener("click", () => {
         if (typeof window.MQA_preguntarRolDirectorTecnico === "function") {
             window.MQA_preguntarRolDirectorTecnico();
         }
-        actualizarTexto();
+        actualizarEstado();
     });
 }
 
