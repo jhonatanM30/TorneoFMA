@@ -94,3 +94,25 @@ todos con Postman/navegador real).
 Con este último cierre (Fase2-07, Fase3-09, Fase3-10, commits `1ac3a8e` y
 `6c2cb14` en el backend, `76662cc`, `31ddd20` y `8685531` en el frontend)
 los 32 hallazgos de `FRONTEND_VISION.md` quedan en estado Completado.
+
+## Hallazgos post-despliegue (revisión manual del usuario, septiembre 2026)
+
+Con la app ya desplegada en Docker (ver `DEPLOYMENT.md`), el usuario la
+probó en el navegador real y reportó 4 hallazgos adicionales, fuera de la
+auditoría de las 7 fases anteriores. Instrucción explícita del usuario:
+resolver de una vez lo que fuera de frontend y no dependiera del backend,
+dejando en estado pendiente (y avisando) cualquier cosa que sí lo
+necesitara. Los cuatro resultaron ser de frontend puro y quedaron
+Completados en el mismo lote, sin que ninguno bloqueara otra cosa:
+
+| # | Hallazgo | Estado | Lado | Justificación |
+|---|---|---|---|---|
+| 8-1 | El modal de sorteo se mostraba aunque no hubiera equipos suficientes para sortear | Completado | Front | `window.abrirModalSorteo` ahora corta antes de mostrar el modal si hay menos de 3 equipos registrados en el sistema, avisando con un toast en vez de dejar entrar y fallar más adelante (`js/modalSorteo.js`). |
+| 8-2 | Al guardar el sorteo no se validaba que la información necesaria estuviera completa | Completado | Front | `modal-sorteo.html` era el único formulario del proyecto sin `novalidate`, dependiendo solo del atributo HTML `required` (poco confiable si no hay fieldsets, por ejemplo). Se agregó `novalidate` y una validación explícita en JS que marca en rojo (`.input-invalido`) los campos de fecha/hora incompletos y bloquea el guardado hasta corregirlos, igual que el resto de modales de la app (`js/modalSorteo.js`, `components/modal-sorteo.html`, `css/modales.css`). |
+| 8-3 | La tabla "Resumen por equipo" no mostraba diferencia de goles ni goles en contra | Completado | Front | Se agregaron ambas columnas. "Goles en contra" no tiene una fuente por jugador (nadie registra una estadística individual por gol recibido), así que se calcula del marcador de cada partido (`golesLocal`/`golesVisitante`) tomando el resultado del rival, igual que en una tabla de posiciones; "Diferencia" sale de restar esa columna a la columna "Goles" ya existente (`js/estadisticas.js`, `estadisticas.html`, `css/estadisticas.css`). |
+| 8-4 | El botón para ingresar como Director Técnico no estaba disponible todo el tiempo | Completado | Front | Causa raíz: en `css/style.css`, el botón "Rol" y el interruptor de modo oscuro compartían la misma clase `.btn-tema` con exactamente el mismo `position: absolute; bottom: 24px`, quedando superpuestos — el de "Rol" (declarado después en el HTML) tapaba por completo al de modo oscuro, dando una experiencia inconsistente. Cada botón tiene ahora su propia franja vertical (`#btn-tema { bottom: 78px }`, `#btn-rol { bottom: 24px }`), visibles y usables los dos en todo momento (`css/style.css`). |
+
+Verificación: los cuatro cambios son de frontend puro (sin tocar
+`mas-que-amigos`), revisados contra el patrón ya establecido en cada
+módulo y comprobados con `node --check` sobre cada `.js` modificado
+(`js/modalSorteo.js`, `js/estadisticas.js`).
