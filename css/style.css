@@ -141,10 +141,15 @@ html, body {
     margin-bottom: 10px;
 }
 
-/* Interruptor de modo oscuro (bonus), al pie del menú lateral. */
+/* Interruptor de modo oscuro (bonus) y boton de Rol (Director Tecnico),
+   ambos al pie del menu lateral y comparten esta clase .btn-tema.
+   Hallazgo: los dos botones usaban el MISMO position:absolute (bottom:24px),
+   por lo que quedaban exactamente superpuestos: el de Rol (declarado
+   despues en el HTML) tapaba por completo al de modo oscuro, y en la
+   practica el boton de Rol se percibia inconsistente/no siempre
+   disponible. Cada boton ahora tiene su propia franja vertical. */
 .btn-tema {
     position: absolute;
-    bottom: 24px;
     left: 20px;
     right: 20px;
     background: rgba(255, 255, 255, 0.12);
@@ -156,6 +161,14 @@ html, body {
     font-family: var(--font-heading);
     cursor: pointer;
     transition: background 0.2s ease;
+}
+
+#btn-tema {
+    bottom: 78px;
+}
+
+#btn-rol {
+    bottom: 24px;
 }
 
 .btn-tema:hover {
