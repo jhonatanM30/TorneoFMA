@@ -14,6 +14,15 @@ const ETIQUETAS_FASE = {
     FINAL: "Final"
 };
 
+// FRONTEND_VISION.md Fase3-09: estados del partido (PROGRAMADO/EN_CURSO/
+// FINALIZADO). Se muestran como badge y controlan qué botón de transición
+// (Iniciar/Finalizar) se ofrece en cada tarjeta.
+const ETIQUETAS_ESTADO = {
+    PROGRAMADO: "Programado",
+    EN_CURSO: "En curso",
+    FINALIZADO: "Finalizado"
+};
+
 document.addEventListener("DOMContentLoaded", async function () {
     const partidosContainer = document.querySelector(".partidos-container");
     const searchInput = document.getElementById("buscar-partido");
@@ -135,6 +144,14 @@ document.addEventListener("DOMContentLoaded", async function () {
             const claseLocal = golesLocal > golesVisitante ? "equipo-ganador" : "";
             const claseVisitante = golesVisitante > golesLocal ? "equipo-ganador" : "";
 
+            const estado = partido.estado || "PROGRAMADO";
+            const estadoEtiqueta = ETIQUETAS_ESTADO[estado] || estado;
+            const botonEstado = estado === "PROGRAMADO"
+                ? `<button class="btn btn-small btn-iniciar-partido" data-id="${partido.id ?? ""}">Iniciar partido</button>`
+                : estado === "EN_CURSO"
+                    ? `<button class="btn btn-small btn-finalizar-partido" data-id="${partido.id ?? ""}">Finalizar partido</button>`
+                    : "";
+
             return `
                 <article class="partido-card" data-id="${partido.id ?? ""}">
                     <div>
@@ -146,10 +163,12 @@ document.addEventListener("DOMContentLoaded", async function () {
                         <div class="partido-meta">
                             <span><i class="fas fa-calendar"></i> ${partido.fecha || "Sin fecha"} ${partido.hora || ""}</span>
                             <span class="badge-fase ${partido.fase || ""}">${faseEtiqueta}</span>
+                            <span class="badge-estado badge-estado--${estado.toLowerCase()}">${estadoEtiqueta}</span>
                         </div>
                     </div>
                     <div class="partido-actions">
                         <a class="btn btn-small btn-alineacion" href="alineaciones.html?idPartido=${partido.id ?? ""}">Alineación</a>
+                        ${botonEstado}
                         <button class="btn btn-small btn-editar" data-id="${partido.id ?? ""}">Editar</button>
                         <button class="btn btn-small btn-eliminar" data-id="${partido.id ?? ""}">Eliminar</button>
                     </div>
@@ -180,6 +199,33 @@ document.addEventListener("DOMContentLoaded", async function () {
                     await cargarPartidos();
                 } catch (error) {
                     mostrarToast(error.message || "No se pudo eliminar el partido", "error");
+                }
+            });
+        });
+
+        partidosContainer.querySelectorAll(".btn-iniciar-partido").forEach((button) => {
+            button.addEventListener("click", async () => {
+                try {
+                    await PartidoService.iniciarPartido(button.dataset.id);
+                    mostrarToast("Partido iniciado.", "success");
+                    await cargarPartidos();
+                } catch (error) {
+                    mostrarToast(error.message || "No se pudo iniciar el partido", "error");
+                }
+            });
+        });
+
+        partidosContainer.querySelectorAll(".btn-finalizar-partido").forEach((button) => {
+            button.addEventListener("click", async () => {
+                const confirmar = window.confirm("¿Finalizar este partido? No podrás registrar más cambios de jugador.");
+                if (!confirmar) return;
+
+                try {
+                    await PartidoService.finalizarPartido(button.dataset.id);
+                    mostrarToast("Partido finalizado.", "success");
+                    await cargarPartidos();
+                } catch (error) {
+                    mostrarToast(error.message || "No se pudo finalizar el partido", "error");
                 }
             });
         });

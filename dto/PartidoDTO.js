@@ -10,6 +10,11 @@
 // defecto en este backend, sin necesidad de reformatear en el cliente.
 export const FASES_PARTIDO = ["FASE_DE_GRUPOS", "REPECHAJE", "ELIMINACION_DIRECTA", "FINAL"];
 
+// FRONTEND_VISION.md Fase3-09: estado del partido. De solo lectura (el
+// backend lo ignora en create/edit): solo cambia via
+// PartidoService.iniciarPartido/finalizarPartido.
+export const ESTADOS_PARTIDO = ["PROGRAMADO", "EN_CURSO", "FINALIZADO"];
+
 export class PartidoDTO {
     constructor({
         id = null,
@@ -21,7 +26,8 @@ export class PartidoDTO {
         hora = "",
         golesLocal = 0,
         golesVisitante = 0,
-        fase = ""
+        fase = "",
+        estado = "PROGRAMADO"
     } = {}) {
         this.id = id;
         this.idEquipoLocal = idEquipoLocal;
@@ -33,5 +39,6 @@ export class PartidoDTO {
         this.golesLocal = golesLocal;
         this.golesVisitante = golesVisitante;
         this.fase = fase;
+        this.estado = estado;
     }
 }

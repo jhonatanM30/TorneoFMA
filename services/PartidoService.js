@@ -68,6 +68,36 @@ export class PartidoService {
         }
     }
 
+    // FRONTEND_VISION.md Fase3-09: marca el partido como en curso (habilita
+    // registrar cambios de jugador y minuto en las estadisticas).
+    static async iniciarPartido(id) {
+        try {
+            const response = await fetch(`${API_URL}/${id}/iniciar`, {
+                method: "PUT",
+                headers: construirHeaders()
+            });
+
+            return await parsearRespuesta(response, "Iniciar partido");
+        } catch (error) {
+            console.error("Error al iniciar el partido:", error);
+            throw error;
+        }
+    }
+
+    static async finalizarPartido(id) {
+        try {
+            const response = await fetch(`${API_URL}/${id}/finalizar`, {
+                method: "PUT",
+                headers: construirHeaders()
+            });
+
+            return await parsearRespuesta(response, "Finalizar partido");
+        } catch (error) {
+            console.error("Error al finalizar el partido:", error);
+            throw error;
+        }
+    }
+
     static async eliminarPartido(id) {
         try {
             const response = await fetch(`${API_URL}/${id}`, {
