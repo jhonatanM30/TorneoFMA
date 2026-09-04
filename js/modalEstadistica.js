@@ -19,6 +19,12 @@ const validarEstadistica = (estadistica) => {
         }
     });
 
+    // fase3-09/fase3-10: minuto es opcional (null si no se indica), pero si
+    // se indica no puede ser negativo.
+    if (estadistica.minuto !== null && estadistica.minuto !== undefined && Number(estadistica.minuto) < 0) {
+        errores.push("El minuto no puede ser negativo.");
+    }
+
     return errores;
 };
 
@@ -143,7 +149,10 @@ export function inicializarModalEstadistica({ partidos = [], jugadores = [], onE
                     goles: Number(formEstadistica.querySelector("#estadistica-goles").value),
                     tarjetasAmarillas: Number(formEstadistica.querySelector("#estadistica-amarillas").value),
                     tarjetasRojas: Number(formEstadistica.querySelector("#estadistica-rojas").value),
-                    asistencias: Number(formEstadistica.querySelector("#estadistica-asistencias").value)
+                    asistencias: Number(formEstadistica.querySelector("#estadistica-asistencias").value),
+                    minuto: formEstadistica.querySelector("#estadistica-minuto").value !== ""
+                        ? Number(formEstadistica.querySelector("#estadistica-minuto").value)
+                        : null
                 };
 
                 const errores = validarEstadistica(payload);

@@ -39,6 +39,43 @@
         <section class="alineacion-resultado">
             <!-- Titulares/suplentes del partido elegido se generan dinámicamente -->
         </section>
+
+        <!-- fase3-09/fase3-10: registrar un cambio de jugador (solo visible
+             si el partido esta EN_CURSO) y ver el historial (cambios +
+             estadisticas con minuto) del partido seleccionado. -->
+        <section class="cambio-jugador-wrapper" id="cambio-jugador-wrapper" hidden>
+            <h3>Registrar cambio</h3>
+            <form id="form-cambio-jugador" class="cambio-jugador-form" novalidate>
+                <label for="cambio-equipo">Equipo:</label>
+                <select id="cambio-equipo" required>
+                    <option value="">Seleccione un equipo</option>
+                </select>
+
+                <label for="cambio-sale">Jugador que sale (titular):</label>
+                <select id="cambio-sale" required disabled>
+                    <option value="">Seleccione un equipo primero</option>
+                </select>
+
+                <label for="cambio-entra">Jugador que entra (suplente):</label>
+                <select id="cambio-entra" required disabled>
+                    <option value="">Seleccione un equipo primero</option>
+                </select>
+
+                <label for="cambio-minuto">Minuto:</label>
+                <input type="number" id="cambio-minuto" min="0" step="1" required>
+
+                <div id="cambio-form-status" class="form-status" aria-live="polite"></div>
+
+                <button type="submit" class="btn">Registrar cambio</button>
+            </form>
+        </section>
+
+        <section class="historial-partido" id="historial-partido" hidden>
+            <h3>Historial del partido</h3>
+            <ul class="historial-lista" id="historial-lista">
+                <!-- cambios + estadisticas con minuto, generado dinamicamente -->
+            </ul>
+        </section>
     </div>
     <div id="modal-container"></div>
     <!-- Contenedor del footer -->
