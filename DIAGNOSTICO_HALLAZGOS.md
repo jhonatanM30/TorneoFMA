@@ -141,3 +141,43 @@ desde este entorno en el momento de la prueba (`ERR_BLOCKED_BY_CLIENT` /
 mostrando un mensaje de error en el mismo contenedor, sin quedar en
 blanco. Todos los `.js` modificados se verificaron además con
 `node --check`.
+
+## Corrección a la segunda ronda (revisión manual del usuario, septiembre 2026)
+
+Tras desplegar la segunda ronda (Fase8-05 a Fase8-07), el usuario probó el
+botón de Rol de nuevo y encontró que la implementación no tenía el
+comportamiento esperado, con cuatro puntos concretos — también resolubles
+enteramente en el frontend:
+
+| # | Hallazgo | Estado | Lado | Justificación |
+|---|---|---|---|---|
+| 8-8 | Al cargar la página no debía preguntarse si el usuario es Director Técnico; el botón debía quedar siempre disponible mostrando "Espectador" (solo consulta) o "Director Técnico" (todos los privilegios) | Completado | Front | `js/config.js` seguía preguntando con `window.prompt()` automáticamente una vez por sesión de navegador (heredado de Fase7), lo que interrumpe a cualquiera que solo entra a mirar (la mayoría de las visitas). Se quitó esa pregunta automática: al cargar cada página solo se restaura la clave ya guardada en `sessionStorage`, si la había, sin preguntar nada por su cuenta. El botón flotante (`js/app.js`) ahora muestra "Espectador" por defecto (antes decía "Consulta") y "Director Técnico" cuando hay una clave guardada, y sigue disponible para pedir la clave con un click en cualquier momento (`js/config.js`, `js/app.js`, `components/menu.html`). |
+| 8-9 | Si el Director Técnico ya identificado intentaba volver a ingresar la clave, no debía permitírselo en silencio: si la escribía mal, la app se vería rota porque no revertía a modo consulta | Completado | Front | Antes, tocar el botón ya siendo Director Técnico volvía a abrir el prompt sin más aviso: un typo (o cancelar sin querer) dejaba la clave guardada inválida, y como la app nunca volvía sola a modo Espectador ni avisaba nada, se veía como una funcionalidad rota. Se implementaron las dos alternativas que el usuario propuso como equivalentes, de forma complementaria: (1) mientras ya se es Director Técnico, el botón ya no vuelve a preguntar la clave directamente — primero pide confirmar con un aviso explícito que se va a cerrar la sesión (volviendo a Espectador), y recién desde ahí se puede indicar una clave nueva (`js/app.js`); (2) si la clave guardada deja de ser válida sin que el usuario haga nada (se escribió mal en algún momento anterior, o cambió), el backend lo revela con un 401 en el primer intento de escritura — se agregó el manejo reactivo en el único lugar por el que pasan todas las respuestas de escritura (`js/apiErrors.js#parsearRespuesta`): ante un 401 con una clave guardada, cierra la sesión de Director Técnico automáticamente (vuelve a Espectador) y lanza un mensaje explícito que la pantalla ya muestra con el manejo de errores existente (toast/`form-status`), en vez de quedar en un estado inconsistente sin explicación. Queda como mejora pendiente y dependiente del backend la validación proactiva (rechazar una clave incorrecta en el momento de ingresarla, antes de cualquier intento de guardado): el interceptor actual (`DirectorTecnicoInterceptor`) no tiene un endpoint dedicado para "solo validar" la clave, y agregar uno es un cambio de backend fuera del alcance de esta corrección. |
+| 8-10 | No debía mostrarse "Configuración" en el menú a un Hincha (usuario sin privilegios) | Completado | Front | Se agregó `actualizarVisibilidadConfiguracion()` en `js/app.js`, que oculta el ítem "Configuración" del menú lateral cuando no hay una clave de Director Técnico activa (modo Espectador) y lo muestra cuando sí la hay. Se ejecuta cada vez que cambia el rol — login, logout manual (8-9) o logout reactivo por 401 —, no solo al cargar la página. |
+| 8-11 | El botón de cambiar entre modo claro y oscuro había desaparecido (regresión de Fase8-06) | Completado | Front | Causa: el arreglo de Fase8-06 pasó `.sidebar` a `display:flex; flex-direction:column` con el `<ul>` creciendo (`flex:1 1 auto`) para hacer scroll interno. Eso resuelve la superposición en ventanas bajas, pero en ventanas normales/altas el `<ul>` con `flex-grow` ocupa todo el alto disponible de un sidebar que mide el 100% de la ventana, empujando el botón de modo oscuro hasta el borde inferior — lejos de los enlaces del menú y, según el alto real de la ventana del usuario, efectivamente fuera de donde se lo esperaba (parecía haber desaparecido). Se reemplazó ese enfoque: ahora `.sidebar` entero (enlaces + botón) es un solo bloque en flujo normal, con `overflow-y: auto` en el propio `.sidebar` (ya no en el `<ul>`) — si el contenido no entra completo, todo el sidebar scrollea como una unidad, y el botón queda siempre en flujo normal justo después del último enlace, sin importar el alto de la ventana (`css/style.css`). |
+
+Verificación: se probó cargando la app real (Live Server en
+`127.0.0.1:5500`) en el navegador integrado. Se confirmó, leyendo el
+`js/config.js` servido (`fetch` + `no-store` para descartar caché) que ya
+no llama a `MQA_preguntarRolDirectorTecnico()` de forma automática, y que
+el botón muestra "Espectador" apenas carga la página sin ningún prompt.
+El comportamiento del click (confirmar cierre de sesión estando ya en
+Director Técnico, tanto al cancelar como al confirmar) y el logout
+reactivo ante un 401 (`js/apiErrors.js`) se probaron invocando
+directamente las funciones expuestas (`window.MQA_actualizarBotonRol`,
+`window.confirm` interceptado con un stub para no bloquear la
+automatización, e `import()` dinámico de `js/apiErrors.js` con una
+`Response` simulada en 401) en vez de manipular el prompt real del
+navegador, evitando así diálogos nativos bloqueantes durante la prueba;
+en ambos casos se verificó que "Configuración" se oculta/muestra en el
+momento correcto. El arreglo del botón de modo oscuro (8-11) se validó
+con `getBoundingClientRect()` tanto en una ventana normal (1280×800) como
+en la ventana angosta ya usada para Fase8-06 (1280×480): en las dos, el
+botón queda pegado justo después del último enlace del menú, sin
+superponerse con "Configuración" y sin quedar lejos de los demás
+enlaces. No fue posible probar el flujo real de guardado (headers X-
+Director-Tecnico-Key contra el backend real) porque el contenedor de
+`mas-que-amigos` no estaba accesible desde este entorno
+(`ERR_BLOCKED_BY_CLIENT`), igual que en la ronda anterior. Todos los
+`.js` modificados (`js/config.js`, `js/app.js`, `js/apiErrors.js`) se
+verificaron además con `node --check`.
