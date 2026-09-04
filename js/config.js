@@ -10,9 +10,9 @@
 // IMPORTANTE: este script debe cargarse ANTES que cualquier otro <script>
 // en cada página HTML (index.html, equipos.html, jugadores.html,
 // partidos.html, estadisticas.html, configuracion.html), porque los demás
-// módulos leen window.APP_CONFIG al importarse, y porque el prompt de
-// Director Técnico de más abajo debe correr antes de que cualquier
-// llamada al backend arme sus headers.
+// módulos leen window.APP_CONFIG al importarse, y porque la clave de
+// Director Técnico de más abajo debe quedar restaurada antes de que
+// cualquier llamada al backend arme sus headers.
 window.APP_CONFIG = {
     API_BASE_URL: "http://localhost:57075/api",
 
@@ -32,23 +32,21 @@ window.APP_CONFIG = {
     DIRECTOR_TECNICO_KEY: null
 };
 
-// FRONTEND_VISION.md Fase7 ("#CONSTANTE INTENCIONAL#"): mientras no exista
-// un login real que distinga Director Técnico de usuarios consultivos, se
-// pregunta la clave una sola vez por sesión de navegador (sessionStorage,
-// no localStorage: se vuelve a preguntar si cierran el navegador, a
-// propósito, para no dejar la sesión de Director Técnico abierta
-// indefinidamente en un equipo compartido). Si la persona solo va a
-// consultar, puede dejar el campo vacío: seguirá pudiendo ver todo, y el
-// backend le devolverá "no autorizado" (con mensaje, mostrado por el
-// manejo de errores ya existente en cada pantalla) si intenta crear,
-// editar o eliminar algo.
+// FRONTEND_VISION.md Fase7 + hallazgo post-despliegue: mientras no exista
+// un login real que distinga Director Técnico de usuarios consultivos, el
+// rol se maneja con esta clave guardada en sessionStorage (no localStorage:
+// se pierde si cierran el navegador, a propósito, para no dejar la sesión
+// de Director Técnico abierta indefinidamente en un equipo compartido).
 //
-// Se expone como función global (no solo se ejecuta una vez) para que el
-// botón "Rol" del menú (ver components/menu.html / js/app.js) pueda
-// volver a preguntar si la persona se equivocó o si cambia quién está
-// usando el equipo.
+// Versión anterior: se preguntaba automáticamente con un prompt() apenas
+// cargaba la página, la primera vez de la sesión. Hallazgo del usuario:
+// eso interrumpe a cualquiera que solo entra a mirar (la mayoría de las
+// visitas), y en vez de eso la aplicación debería entrar directo
+// mostrando "Espectador" y dejar el botón de Rol (ver components/menu.html
+// / js/app.js) siempre disponible para quien SÍ quiera identificarse como
+// Director Técnico cuando lo necesite. Por eso acá solo se restaura la
+// clave ya guardada (si la hay); nunca se pregunta sola.
 const CLAVE_DIRECTOR_STORAGE_KEY = "mqa-director-tecnico-clave";
-const CLAVE_DIRECTOR_PREGUNTADO_KEY = "mqa-director-tecnico-preguntado";
 
 function leerClaveDirectorGuardada() {
     try {
@@ -60,7 +58,6 @@ function leerClaveDirectorGuardada() {
 
 function guardarClaveDirector(clave) {
     try {
-        sessionStorage.setItem(CLAVE_DIRECTOR_PREGUNTADO_KEY, "1");
         if (clave) {
             sessionStorage.setItem(CLAVE_DIRECTOR_STORAGE_KEY, clave);
         } else {
@@ -73,33 +70,41 @@ function guardarClaveDirector(clave) {
     }
 }
 
+// Pide la clave para ENTRAR como Director Técnico. Solo debe invocarse
+// mientras se está en modo Espectador (el botón de Rol en js/app.js decide
+// cuándo llamar esto vs. cuándo cerrar sesión) para no dejar que un typo
+// pise en silencio una clave que ya funcionaba.
 window.MQA_preguntarRolDirectorTecnico = function preguntarRolDirectorTecnico() {
     const respuesta = window.prompt(
         "¿Eres Director Técnico?\n\nIngresa la clave para poder crear, editar o eliminar información. " +
-        "Si solo vas a consultar, deja este campo vacío y presiona Aceptar.",
+        "Si solo vas a ver el torneo (Espectador), deja este campo vacío y presiona Aceptar.",
         ""
     );
 
     // Cancelar el prompt (null) se trata igual que dejarlo vacío: rol de
-    // solo consulta, no se vuelve a preguntar en esta misma sesión de
-    // navegador salvo que usen el botón "Rol" del menú.
+    // Espectador.
     const clave = respuesta && respuesta.trim() ? respuesta.trim() : null;
     guardarClaveDirector(clave);
     window.APP_CONFIG.DIRECTOR_TECNICO_KEY = clave;
     return clave;
 };
 
-(function inicializarClaveDirectorTecnico() {
-    let yaPreguntado = null;
-    try {
-        yaPreguntado = sessionStorage.getItem(CLAVE_DIRECTOR_PREGUNTADO_KEY);
-    } catch (error) {
-        yaPreguntado = null;
+// Cierra la sesión de Director Técnico y vuelve a modo Espectador. La
+// invoca el botón de Rol cuando el usuario confirma que quiere salir (ver
+// js/app.js), y también el manejo global de errores (js/apiErrors.js)
+// cuando el backend responde 401: si la clave guardada ya no es válida
+// (se reingresó mal, o cambió), no tiene sentido seguir mandándola en
+// cada request como si nada — eso es lo que antes se veía como "la app
+// no sirve", porque nunca se avisaba ni se corregía el estado.
+window.MQA_cerrarSesionDirectorTecnico = function cerrarSesionDirectorTecnico() {
+    guardarClaveDirector(null);
+    window.APP_CONFIG.DIRECTOR_TECNICO_KEY = null;
+    if (typeof window.MQA_actualizarBotonRol === "function") {
+        window.MQA_actualizarBotonRol();
     }
+};
 
-    if (!yaPreguntado) {
-        window.MQA_preguntarRolDirectorTecnico();
-    } else {
-        window.APP_CONFIG.DIRECTOR_TECNICO_KEY = leerClaveDirectorGuardada();
-    }
-})();
+// Al cargar cada página: restaurar la clave si ya la había (sessionStorage
+// persiste entre las páginas de esta misma pestaña de navegador), sin
+// preguntar nunca nada de forma automática.
+window.APP_CONFIG.DIRECTOR_TECNICO_KEY = leerClaveDirectorGuardada();

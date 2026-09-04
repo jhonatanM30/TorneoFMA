@@ -103,6 +103,29 @@ export async function parsearRespuesta(response, etiquetaAccion) {
     }
 
     if (!response.ok) {
+        // Hallazgo post-despliegue (segunda ronda): un 401 acá solo puede
+        // significar que la clave de Director Técnico guardada
+        // (X-Director-Tecnico-Key, ver construirHeaders() más arriba) ya
+        // no es válida -el backend no tiene ningún otro login que
+        // devuelva 401, porque AUTH_TOKEN siempre es null (ver
+        // js/config.js). Antes, en ese caso, la app seguía mandando esa
+        // misma clave inválida en cada intento siguiente sin avisar nada
+        // y sin volver nunca a modo Espectador, así que se veía como si
+        // "no sirviera" en vez de como un problema de clave. Ahora, apenas
+        // se detecta, se cierra acá mismo la sesión de Director Técnico
+        // (vuelve a Espectador, ver js/config.js) y el mensaje se lo dice
+        // explícitamente al usuario, que puede volver a ingresar la clave
+        // correcta con el botón de Rol (js/app.js).
+        if (response.status === 401 && window.APP_CONFIG?.DIRECTOR_TECNICO_KEY) {
+            if (typeof window.MQA_cerrarSesionDirectorTecnico === "function") {
+                window.MQA_cerrarSesionDirectorTecnico();
+            }
+            throw new Error(
+                "La clave de Director Técnico ya no es válida. Volviste a modo Espectador (solo lectura); " +
+                "usa el botón de Rol para ingresar la clave correcta."
+            );
+        }
+
         const mensaje = payload
             ? extraerMensajeError(payload, `${etiquetaAccion} falló`)
             : (texto || `${etiquetaAccion} falló`);

@@ -90,6 +90,7 @@ html, body {
     height: 100%;
     background-color: var(--color-dark);
     padding-top: 60px;
+    padding-bottom: 20px;
     transition: 0.3s;
     z-index: 1000;
     border-right: 3px solid rgba(255, 255, 255, 0.2);
@@ -98,12 +99,16 @@ html, body {
        (o con mas items de los que caben) el boton de modo oscuro, al ir
        con position:absolute pegado al fondo del sidebar, terminaba
        montado ENCIMA del ultimo item del menu (Configuracion) en vez de
-       quedar debajo. Se pasa el sidebar a flex-column: el <ul> de abajo
-       crece y hace su propio scroll si hace falta, y el boton de modo
-       oscuro queda en flujo normal, siempre despues del ultimo item. */
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+       quedar debajo. Un primer intento paso el sidebar a flex-column con
+       el <ul> creciendo (flex: 1 1 auto) y haciendo scroll interno, pero
+       en pantallas altas eso empuja el boton hasta el borde inferior del
+       sidebar (que mide el 100% del alto de la ventana), lejos de los
+       enlaces del menu: se veia como si el boton hubiera desaparecido.
+       Ahora el sidebar completo (enlaces + boton) es un solo bloque en
+       flujo normal, que hace scroll como unidad si no entra completo, asi
+       el boton siempre queda justo despues del ultimo enlace, cerca de
+       donde se lo espera, tanto en pantallas altas como bajas. */
+    overflow-y: auto;
 }
 
 .sidebar ul {
@@ -111,8 +116,6 @@ html, body {
     padding: 0;
     margin: 0;
     margin-top: 35px;
-    flex: 1 1 auto;
-    overflow-y: auto;
 }
 
 .sidebar ul li {
@@ -160,7 +163,8 @@ html, body {
    este queda como unico boton al pie, en flujo normal (no absolute) para
    que el <ul> con scroll de arriba nunca quede tapado ni lo tape. */
 .btn-tema {
-    flex-shrink: 0;
+    display: block;
+    width: calc(100% - 40px);
     margin: 12px 20px 20px;
     background: rgba(255, 255, 255, 0.12);
     color: #fff;
