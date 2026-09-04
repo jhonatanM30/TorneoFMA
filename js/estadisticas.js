@@ -161,6 +161,16 @@ document.addEventListener("DOMContentLoaded", async function () {
 // jugados, titulos, goles y tarjetas totales) + un grafico, a partir de
 // los mismos datos ya cargados (sin endpoints nuevos: el backend no tiene
 // una consulta de agregados, se calcula en el cliente).
+//
+// Auditoria (hallazgo): la tabla no mostraba goles en contra ni
+// diferencia de goles. La columna "Goles" existente se calcula a partir
+// de los registros de Estadistica (goles acreditados a jugadores), que es
+// la única fuente de "goles a favor" que ya tenía esta pantalla; no hay
+// un dato equivalente por jugador para "goles en contra" (nadie registra
+// una estadística individual por gol recibido), así que "goles en contra"
+// se calcula del marcador de cada partido (golesLocal/golesVisitante)
+// tomando el resultado del equipo rival, igual que se haría en una tabla
+// de posiciones. La diferencia sale de restar ambos valores.
 function renderResumenPorEquipo() {
     const cuerpoTabla = document.getElementById("tabla-resumen-equipos-body");
     const canvas = document.getElementById("chart-equipos-stats");
@@ -171,14 +181,22 @@ function renderResumenPorEquipo() {
     const resumenPorEquipo = new Map();
     const obtenerResumen = (idEquipo) => {
         if (!resumenPorEquipo.has(idEquipo)) {
-            resumenPorEquipo.set(idEquipo, { partidos: new Set(), goles: 0, amarillas: 0, rojas: 0 });
+            resumenPorEquipo.set(idEquipo, { partidos: new Set(), goles: 0, golesEnContra: 0, amarillas: 0, rojas: 0 });
         }
         return resumenPorEquipo.get(idEquipo);
     };
 
     partidosCache.forEach((partido) => {
-        if (partido.equipoLocal?.id) obtenerResumen(partido.equipoLocal.id).partidos.add(partido.id);
-        if (partido.equipoVisitante?.id) obtenerResumen(partido.equipoVisitante.id).partidos.add(partido.id);
+        if (partido.equipoLocal?.id) {
+            const resumenLocal = obtenerResumen(partido.equipoLocal.id);
+            resumenLocal.partidos.add(partido.id);
+            resumenLocal.golesEnContra += Number(partido.golesVisitante || 0);
+        }
+        if (partido.equipoVisitante?.id) {
+            const resumenVisitante = obtenerResumen(partido.equipoVisitante.id);
+            resumenVisitante.partidos.add(partido.id);
+            resumenVisitante.golesEnContra += Number(partido.golesLocal || 0);
+        }
     });
 
     estadisticasCache.forEach((estadistica) => {
@@ -193,18 +211,23 @@ function renderResumenPorEquipo() {
     });
 
     if (equiposCache.length === 0) {
-        cuerpoTabla.innerHTML = '<tr><td colspan="6" class="empty-state">No hay equipos registrados.</td></tr>';
+        cuerpoTabla.innerHTML = '<tr><td colspan="8" class="empty-state">No hay equipos registrados.</td></tr>';
         return;
     }
 
     cuerpoTabla.innerHTML = equiposCache.map((equipo) => {
         const resumen = obtenerResumen(equipo.id);
+        const diferencia = resumen.goles - resumen.golesEnContra;
+        const claseDiferencia = diferencia > 0 ? "diferencia-positiva" : (diferencia < 0 ? "diferencia-negativa" : "");
+        const textoDiferencia = diferencia > 0 ? `+${diferencia}` : `${diferencia}`;
         return `
             <tr>
                 <td>${equipo.nombre}</td>
                 <td>${resumen.partidos.size}</td>
                 <td>${equipo.titulos ?? 0}</td>
                 <td>${resumen.goles}</td>
+                <td>${resumen.golesEnContra}</td>
+                <td class="${claseDiferencia}">${textoDiferencia}</td>
                 <td>${resumen.amarillas}</td>
                 <td>${resumen.rojas}</td>
             </tr>
@@ -219,6 +242,7 @@ function renderResumenPorEquipo() {
             labels: equiposCache.map((equipo) => equipo.nombre),
             datasets: [
                 { label: "Goles", data: equiposCache.map((equipo) => obtenerResumen(equipo.id).goles), backgroundColor: "#145A32" },
+                { label: "Goles en contra", data: equiposCache.map((equipo) => obtenerResumen(equipo.id).golesEnContra), backgroundColor: "#7f8c8d" },
                 { label: "T. Amarillas", data: equiposCache.map((equipo) => obtenerResumen(equipo.id).amarillas), backgroundColor: "#FFD700" },
                 { label: "T. Rojas", data: equiposCache.map((equipo) => obtenerResumen(equipo.id).rojas), backgroundColor: "#b22222" }
             ]

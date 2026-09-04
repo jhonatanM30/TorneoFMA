@@ -151,3 +151,16 @@
     min-width: 280px;
     max-width: 460px;
 }
+
+/* Hallazgo: "diferencia de goles y goles en contra" en Resumen por
+   equipo. Resalta la diferencia en verde/rojo, igual que una tabla de
+   posiciones. */
+.estadisticas-table td.diferencia-positiva {
+    color: #145A32;
+    font-weight: 600;
+}
+
+.estadisticas-table td.diferencia-negativa {
+    color: #b22222;
+    font-weight: 600;
+}
