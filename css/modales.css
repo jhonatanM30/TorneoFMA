@@ -172,8 +172,28 @@
     cursor: not-allowed;
 }
 
+/* Hallazgo: el toggle de is-loading (ver setSavingState en cada
+   modal*.js) ya existia en JS, pero aca solo bajaba la opacidad un poco
+   (0.85) sobre un boton que ademas ya estaba disabled (con su propio
+   cambio de color): en la practica no se notaba ningun spinner. Se
+   agrega un spinner real (::before) reutilizando @keyframes girar de
+   css/style.css. */
 .modal-content button.is-loading {
     opacity: 0.85;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.modal-content button.is-loading::before {
+    content: "";
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.45);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: girar 0.7s linear infinite;
 }
 
 /* Variante ancha para modales con formularios mas complejos (carga en

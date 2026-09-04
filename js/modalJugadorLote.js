@@ -147,6 +147,7 @@ export function inicializarModalJugadorLote({ equipos = [], onLoteGuardado = () 
                 }
 
                 submitButton.disabled = true;
+                submitButton.classList.add("is-loading");
                 submitText.textContent = "Guardando...";
                 setStatus("");
 
@@ -181,6 +182,7 @@ export function inicializarModalJugadorLote({ equipos = [], onLoteGuardado = () 
                     setStatus(error.message || "Ocurrió un error al guardar el lote.", "error");
                 } finally {
                     submitButton.disabled = false;
+                    submitButton.classList.remove("is-loading");
                     submitText.textContent = "Guardar lote";
                 }
             });

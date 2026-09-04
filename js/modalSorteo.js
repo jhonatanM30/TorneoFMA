@@ -193,6 +193,7 @@ export function inicializarModalSorteo({ equipos = [], onSorteoGuardado = () => 
                 }
 
                 guardarBtn.disabled = true;
+                guardarBtn.classList.add("is-loading");
                 guardarText.textContent = "Guardando...";
                 setStatus(statusParejas, "");
 
@@ -222,6 +223,7 @@ export function inicializarModalSorteo({ equipos = [], onSorteoGuardado = () => 
                 }
 
                 guardarBtn.disabled = false;
+                guardarBtn.classList.remove("is-loading");
                 guardarText.textContent = "Guardar sorteo";
 
                 closeModal();
