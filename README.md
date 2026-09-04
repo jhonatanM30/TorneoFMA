@@ -1,19 +1,28 @@
 # Más Que Amigos — Frontend (Torneo)
 
 Frontend web para la API REST de gestión del torneo **Más Que Amigos**
-(equipos, jugadores, partidos y estadísticas). Este documento cubre lo que
-pedía `FRONTEND_VISION.md`: la tecnología elegida, el manejo de estado,
-la navegación, y cómo levantarlo — para que quien retome el proyecto no
-tenga que adivinarlo leyendo el código.
+(equipos, jugadores, partidos, alineaciones, estadísticas y, desde la
+Fase 6, publicaciones informativas de Configuración). Este documento
+cubre la tecnología elegida, el manejo de estado, la navegación, y cómo
+levantarlo — para que quien retome el proyecto no tenga que adivinarlo
+leyendo el código.
+
+> **Auditoría de hallazgos (Fases 1 a 7):** este proyecto pasó por una
+> auditoría completa contra `FRONTEND_VISION.md` (32 hallazgos en 7
+> fases). El detalle de qué se resolvió, qué quedó pendiente/bloqueado y
+> por qué, hallazgo por hallazgo, está en
+> [`DIAGNOSTICO_HALLAZGOS.md`](./DIAGNOSTICO_HALLAZGOS.md). La sección
+> "Historial de cambios" más abajo resume esa auditoría a nivel de
+> módulo.
 
 ## Tecnología
 
 **HTML + CSS + JavaScript "vanilla" (ES Modules), sin framework y sin paso
 de build.** Se eligió deliberadamente sobre React/Vue/Angular porque:
 
-- El alcance funcional (4 módulos CRUD simples: Equipos, Jugadores,
-  Partidos, Estadísticas) no necesita gestión de estado compleja ni
-  enrutado del lado del cliente.
+- El alcance funcional (módulos CRUD sobre Equipos, Jugadores, Partidos,
+  Alineaciones, Estadísticas y, desde la Fase 6, Configuración) no
+  necesita gestión de estado compleja ni enrutado del lado del cliente.
 - Cero dependencias de build significa que cualquiera puede abrir el
   proyecto y ejecutarlo sin `npm install`, sin configurar bundler, y sin
   que una versión de Node distinta rompa nada.
@@ -39,7 +48,7 @@ centralizado en `css/style.css`:
   variables — así un cambio de color se hace en un solo lugar.
 - **Modales compartidos** (`css/modales.css`): un único set de clases
   (`.modal`, `.modal-content`, `.form-status`, `.modal-buttons`...) para
-  los 6 formularios modales del sitio, en vez de repetir estilos por
+  todos los formularios modales del sitio, en vez de repetir estilos por
   módulo.
 - **Modo oscuro**: variantes de esas mismas variables bajo
   `:root[data-theme="dark"]` (ver sección "Modo oscuro" más abajo).
@@ -52,18 +61,24 @@ centralizado en `css/style.css`:
 ## Estructura de carpetas
 
 ```
-index.html, equipos.html, jugadores.html, partidos.html, estadisticas.html
+index.html, equipos.html, jugadores.html, partidos.html,
+alineaciones.html, estadisticas.html, configuracion.html
   → una página HTML por módulo, todas comparten menú y footer (ver más abajo)
 
-components/        → fragmentos HTML reutilizables (menú, footer, modales)
+components/        → fragmentos HTML reutilizables (menú, footer, modales:
+                       equipo, detalle de equipo, jugador, jugador-lote,
+                       partido, sorteo, alineación, estadística y, desde
+                       Fase 6, registro-informativo)
 css/                → estilos: style.css (base + tema compartido) +
                        un archivo por página + modales.css (compartido)
 dto/                → "espejo" en JS de cada DTO del backend, documentando
                        qué campos son de solo lectura y por qué
 services/           → un fetch-wrapper por entidad (EquipoService,
-                       JugadorService, PartidoService, EstadisticaService)
-js/                  → config.js, apiErrors.js, app.js (compartidos) +
-                       un <página>.js (controlador de la página) y un
+                       JugadorService, PartidoService, AlineacionService,
+                       EstadisticaService, RegistroInformativoService)
+js/                  → config.js (config + prompt de rol Director
+                       Técnico, Fase 7), apiErrors.js, app.js (compartidos)
+                       + un <página>.js (controlador de la página) y un
                        modal<Entidad>.js (formulario modal) por módulo
 assets/              → fotos del torneo usadas en Inicio y en los fondos
                        de los banners de cada página
@@ -71,8 +86,9 @@ assets/              → fotos del torneo usadas en Inicio y en los fondos
 
 ### Patrón por módulo
 
-Cada entidad (Equipo, Jugador, Partido, Estadística) sigue exactamente el
-mismo patrón de 4 piezas, para que agregar un módulo nuevo sea mecánico:
+Cada entidad (Equipo, Jugador, Partido, Alineación, Estadística y,
+desde la Fase 6, RegistroInformativo) sigue exactamente el mismo patrón
+de 4 piezas, para que agregar un módulo nuevo sea mecánico:
 
 1. `dto/<Entidad>DTO.js` — constructor con los mismos campos que el DTO
    Java, documentando cuáles son de solo lectura.
@@ -85,7 +101,10 @@ mismo patrón de 4 piezas, para que agregar un módulo nuevo sea mecánico:
 
 Jugador es el único módulo con una quinta pieza,
 `components/modal-jugador-lote.html` + `js/modalJugadorLote.js`, para
-`POST /api/jugadores/batch`.
+`POST /api/jugadores/batch`. RegistroInformativo (Configuración, Fase 6)
+es el único módulo sin edición: el backend solo expone crear y eliminar,
+así que su modal no tiene modo "editar" como sí lo tienen Equipo, Jugador
+y Partido.
 
 ## Manejo de estado
 
@@ -108,6 +127,46 @@ Se eligió esto (en vez de un router de cliente) porque, sin framework,
 un router a mano añade complejidad sin necesidad real: son 5 páginas fijas
 conocidas de antemano.
 
+## Historial de cambios (auditoría FRONTEND_VISION.md, Fases 1-7)
+
+Resumen por módulo de la auditoría de 32 hallazgos (detalle completo,
+hallazgo por hallazgo, en
+[`DIAGNOSTICO_HALLAZGOS.md`](./DIAGNOSTICO_HALLAZGOS.md)):
+
+- **Fase 1 (Equipos):** subida de escudo desde el dispositivo,
+  `tipoClasificacion` restringido a Eliminatoria/Repechaje, detalle de
+  equipo en modal (con cantidad de jugadores) en vez de `alert()`,
+  búsqueda parcial por nombre, botón "Listar todo", filtro por tipo de
+  clasificación, estados de carga en toda la app, y el sorteo de
+  partidos movido a la pantalla de Partidos (donde pedía el hallazgo).
+- **Fase 2 (Jugadores):** la página abre directo el listado (no el modal
+  de carga masiva), cada jugador del lote puede ir a un equipo distinto,
+  scroll interno en modales largos, ya no se pierde información al
+  hacer clic afuera del modal, texto de ayuda informativo (no técnico),
+  resultado del lote en toast, y cero usos de `alert()` en todo el
+  sitio. Pendiente: foto de jugador como fondo de card (ver Diagnóstico).
+- **Fase 3 (Partidos y Alineaciones):** equipos local/visitante no
+  pueden repetirse, formulario de partido ya no esconde los botones de
+  Guardar/Cancelar, filtros de fase/fecha/búsqueda funcionando, edición
+  de partidos, sorteo aleatorio de partidos con las reglas de emparejado
+  pedidas, y acceso a Alineaciones directo desde la tarjeta del partido.
+  Pendiente/Bloqueado: sucesos en vivo del partido (goles, tarjetas,
+  cambios de jugador con tiempo) y su historial (ver Diagnóstico).
+- **Fase 4 (Estadísticas):** resumen agregado por equipo (partidos
+  jugados, títulos, goles, tarjetas) y gráfico de barras, además del
+  listado ya existente por jugador/partido.
+- **Fase 5 (Inicio):** se mantienen las tarjetas de resumen (sin barras
+  de progreso) y se agregó la sección "Novedades del torneo", que
+  muestra los registros informativos creados desde Configuración.
+- **Fase 6 (Configuración):** página nueva para crear y eliminar
+  registros informativos (tipo blog) que alimentan la sección de
+  Novedades de Inicio.
+- **Fase 7 (rol Director Técnico):** al cargar cualquier página se
+  pregunta una sola vez por sesión de navegador si quien la usa es
+  Director Técnico; sin la clave correcta, el backend rechaza cualquier
+  acción de escritura (crear/editar/eliminar) con un mensaje claro. El
+  botón "Rol" del menú permite volver a indicar la clave sin recargar.
+
 ## Cómo ejecutarlo
 
 1. Levanta el backend (ver `DEPLOYMENT.md` en el repo del backend,
@@ -125,4 +184,13 @@ conocidas de antemano.
    `http://localhost:57075` (por ejemplo, si lo levantaste con
    `docker compose` en otro puerto vía `SERVER_PORT`).
 4. Abre `http://127.0.0.1:5500/index.html` (o el puerto que uses).
+5. Al cargar la primera página del sitio, el navegador va a preguntar
+   (Fase 7) si quien lo usa es Director Técnico. Si vas a crear, editar
+   o eliminar información, ingresa la clave configurada en el backend
+   (`app.director-tecnico.clave` / variable de entorno
+   `APP_DIRECTOR_TECNICO_CLAVE`; en desarrollo local por defecto es
+   `director2025`). Si solo vas a consultar, deja el campo vacío — vas a
+   poder ver todo igual, solo que cualquier acción de escritura va a
+   responder "no autorizado". Podés volver a indicar el rol en cualquier
+   momento con el botón "Rol" del menú lateral, sin recargar la página.
 
