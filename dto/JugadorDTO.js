@@ -14,7 +14,8 @@ export class JugadorDTO {
         edad = null,
         dorsal = null,
         idEquipo = null,
-        equipo = null
+        equipo = null,
+        imagenUrl = null
     } = {}) {
         this.id = id;
         this.nombre = nombre;
@@ -23,5 +24,9 @@ export class JugadorDTO {
         this.dorsal = dorsal;
         this.idEquipo = idEquipo;
         this.equipo = equipo;
+        // FRONTEND_VISION.md Fase2 (bonus): foto del jugador, mismo patron
+        // que EquipoDTO.imagenUrl (se sube aparte via
+        // JugadorService.subirImagenJugador, ver js/modalJugador.js).
+        this.imagenUrl = imagenUrl;
     }
 }

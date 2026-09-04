@@ -144,6 +144,20 @@ export function inicializarModalJugador({ equipos = [], onJugadorGuardado = () =
                     }
 
                     if (resultado) {
+                        // FRONTEND_VISION.md Fase2 (bonus): si adjuntaron una
+                        // foto, se sube DESPUES de crear/editar (recién ahí
+                        // se conoce el id del jugador), igual que el escudo
+                        // de equipo en modalEquipo.js.
+                        const inputFoto = formJugador.querySelector("#jugador-foto-archivo");
+                        const foto = inputFoto?.files?.[0];
+                        if (foto && resultado.id) {
+                            try {
+                                await JugadorService.subirImagenJugador(resultado.id, foto);
+                            } catch (errorFoto) {
+                                mostrarToast(errorFoto.message || "El jugador se guardó, pero no se pudo subir la foto.", "error");
+                            }
+                        }
+
                         formJugador.reset();
                         closeModal();
                         mostrarToast(mensajeExito, "success");

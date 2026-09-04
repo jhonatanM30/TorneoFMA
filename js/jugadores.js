@@ -141,8 +141,17 @@ function renderJugadores(container, jugadores, onCambio) {
         const idEquipoJugador = jugador.idEquipo ?? jugador.equipo?.id ?? "";
         const colorEquipo = colorParaEquipo(idEquipoJugador);
 
+        // FRONTEND_VISION.md Fase2 (bonus): "que esta se vea como fondo de
+        // la card actual de manera suave predominando la información del
+        // jugador, en caso de que no la cargue card queda como esta
+        // actualmente". Se pasa la URL por una variable CSS (--foto-jugador)
+        // en vez de background-image directo, para que css/jugadores.css
+        // controle el overlay claro/oscuro sin tener que armarlo aquí.
+        const claseFoto = jugador.imagenUrl ? " jugador-card--con-foto" : "";
+        const estiloFoto = jugador.imagenUrl ? `--foto-jugador: url('${jugador.imagenUrl}');` : "";
+
         return `
-            <article class="jugador-card" data-id="${jugador.id ?? ""}" style="border-top-color: ${colorEquipo};">
+            <article class="jugador-card${claseFoto}" data-id="${jugador.id ?? ""}" style="border-top-color: ${colorEquipo}; ${estiloFoto}">
                 <span class="dorsal">${jugador.dorsal ?? "-"}</span>
                 <div><span class="badge-posicion ${jugador.posicion || ""}">${posicionEtiqueta}</span></div>
                 <h3>${jugador.nombre || "Jugador sin nombre"}</h3>

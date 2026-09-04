@@ -1,4 +1,4 @@
-import { parsearRespuesta, construirHeaders } from "../js/apiErrors.js";
+import { parsearRespuesta, construirHeaders, construirHeadersMultipart } from "../js/apiErrors.js";
 
 const API_URL = `${window.APP_CONFIG.API_BASE_URL}/jugadores`;
 
@@ -86,6 +86,26 @@ export class JugadorService {
             return await parsearRespuesta(response, "Actualizar jugador");
         } catch (error) {
             console.error("Error al actualizar jugador:", error);
+            throw error;
+        }
+    }
+
+    // FRONTEND_VISION.md Fase2 (bonus): foto del jugador, mismo patron que
+    // EquipoService.subirImagenEquipo (Fase1-01).
+    static async subirImagenJugador(id, archivo) {
+        try {
+            const formData = new FormData();
+            formData.append("imagen", archivo);
+
+            const response = await fetch(`${API_URL}/${id}/imagen`, {
+                method: "POST",
+                headers: construirHeadersMultipart(),
+                body: formData
+            });
+
+            return await parsearRespuesta(response, "Subir foto del jugador");
+        } catch (error) {
+            console.error("Error al subir la foto del jugador:", error);
             throw error;
         }
     }

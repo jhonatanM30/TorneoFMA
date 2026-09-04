@@ -124,6 +124,22 @@ h2{
     transform: scale(1.03);
 }
 
+/* FRONTEND_VISION.md Fase2 (bonus): foto del jugador como fondo suave de
+   su card. --foto-jugador la fija js/jugadores.js por jugador (inline,
+   solo cuando imagenUrl existe); el degradado semitransparente encima es
+   lo que hace que "predomine la informacion del jugador" en vez de que la
+   foto opaque el texto. Dos variantes (clara/oscura) porque el overlay
+   blanco de la variante clara se veria mal en modo oscuro. */
+.jugador-card--con-foto {
+    background-image: linear-gradient(rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.82)), var(--foto-jugador);
+    background-size: cover;
+    background-position: center;
+}
+
+:root[data-theme="dark"] .jugador-card--con-foto {
+    background-image: linear-gradient(rgba(20, 20, 20, 0.78), rgba(20, 20, 20, 0.78)), var(--foto-jugador);
+}
+
 .jugador-card .dorsal {
     display: inline-block;
     background: var(--color-primary);
