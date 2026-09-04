@@ -9,8 +9,8 @@ leyendo el código.
 
 > **Auditoría de hallazgos (Fases 1 a 7):** este proyecto pasó por una
 > auditoría completa contra `FRONTEND_VISION.md` (32 hallazgos en 7
-> fases). El detalle de qué se resolvió, qué quedó pendiente/bloqueado y
-> por qué, hallazgo por hallazgo, está en
+> fases), que terminó con los 32 hallazgos en estado Completado. El
+> detalle de qué se resolvió y por qué, hallazgo por hallazgo, está en
 > [`DIAGNOSTICO_HALLAZGOS.md`](./DIAGNOSTICO_HALLAZGOS.md). La sección
 > "Historial de cambios" más abajo resume esa auditoría a nivel de
 > módulo.
@@ -75,7 +75,8 @@ dto/                → "espejo" en JS de cada DTO del backend, documentando
                        qué campos son de solo lectura y por qué
 services/           → un fetch-wrapper por entidad (EquipoService,
                        JugadorService, PartidoService, AlineacionService,
-                       EstadisticaService, RegistroInformativoService)
+                       EstadisticaService, RegistroInformativoService,
+                       CambioJugadorService)
 js/                  → config.js (config + prompt de rol Director
                        Técnico, Fase 7), apiErrors.js, app.js (compartidos)
                        + un <página>.js (controlador de la página) y un
@@ -143,15 +144,20 @@ hallazgo por hallazgo, en
   de carga masiva), cada jugador del lote puede ir a un equipo distinto,
   scroll interno en modales largos, ya no se pierde información al
   hacer clic afuera del modal, texto de ayuda informativo (no técnico),
-  resultado del lote en toast, y cero usos de `alert()` en todo el
-  sitio. Pendiente: foto de jugador como fondo de card (ver Diagnóstico).
+  resultado del lote en toast, cero usos de `alert()` en todo el
+  sitio, y la foto del jugador como fondo suave de su card (bonus,
+  mismo mecanismo de subida que el escudo del equipo).
 - **Fase 3 (Partidos y Alineaciones):** equipos local/visitante no
   pueden repetirse, formulario de partido ya no esconde los botones de
   Guardar/Cancelar, filtros de fase/fecha/búsqueda funcionando, edición
   de partidos, sorteo aleatorio de partidos con las reglas de emparejado
-  pedidas, y acceso a Alineaciones directo desde la tarjeta del partido.
-  Pendiente/Bloqueado: sucesos en vivo del partido (goles, tarjetas,
-  cambios de jugador con tiempo) y su historial (ver Diagnóstico).
+  pedidas, acceso a Alineaciones directo desde la tarjeta del partido, y
+  el partido en vivo: estado (`PROGRAMADO`/`EN_CURSO`/`FINALIZADO`) con
+  botones "Iniciar partido"/"Finalizar partido", registrar cambios de
+  jugador (titular sale, suplente entra, con minuto) desde Alineaciones,
+  y un historial del partido que combina esos cambios con las
+  estadísticas que traen minuto — diseño deliberadamente liviano (sin
+  reloj en vivo ni websockets) acorde a un torneo amateur entre amigos.
 - **Fase 4 (Estadísticas):** resumen agregado por equipo (partidos
   jugados, títulos, goles, tarjetas) y gráfico de barras, además del
   listado ya existente por jugador/partido.
