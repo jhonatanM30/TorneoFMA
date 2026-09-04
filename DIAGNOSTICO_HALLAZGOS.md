@@ -116,3 +116,28 @@ Verificación: los cuatro cambios son de frontend puro (sin tocar
 `mas-que-amigos`), revisados contra el patrón ya establecido en cada
 módulo y comprobados con `node --check` sobre cada `.js` modificado
 (`js/modalSorteo.js`, `js/estadisticas.js`).
+
+## Segunda ronda post-despliegue (revisión manual del usuario, septiembre 2026)
+
+El usuario pidió tres ajustes adicionales tras seguir probando la app ya
+desplegada, también resolubles enteramente en el frontend:
+
+| # | Hallazgo | Estado | Lado | Justificación |
+|---|---|---|---|---|
+| 8-5 | El ingreso como Director Técnico debía ser "dinámico": disponible todo el tiempo, no solo al cargar la página, idealmente a un costado | Completado | Front | El botón "Rol" vivía dentro del menú lateral colapsable (en móvil había que abrir el menú para encontrarlo) y competía por espacio con el interruptor de modo oscuro. Se sacó a un botón flotante fuera del menú (`.btn-rol-flotante` en `components/menu.html`), fijo "a un costado" (costado opuesto al botón hamburguesa), visible en toda página y en todo momento sin depender de abrir el menú ni de recargar. Además ahora refleja el rol activo cambiando de color e ícono (gris "Consulta" / dorado "Director Técnico"), no solo el texto (`js/app.js`, `css/style.css`). |
+| 8-6 | La barra de menú no tenía scroll: al cambiar de modo claro/oscuro el botón aparecía montado sobre "Configuración" | Completado | Front | El `<ul>` del menú no tenía overflow propio, así que en ventanas bajas (o con más ítems de los que caben) el botón de modo oscuro, con `position:absolute` pegado al fondo del sidebar, terminaba encima del último ítem en vez de debajo. Se pasó `.sidebar` a `display:flex; flex-direction:column`, con el `<ul>` creciendo (`flex:1`) y haciendo su propio scroll interno (`overflow-y:auto`) cuando hace falta, y el botón de modo oscuro en flujo normal (ya no absolute) siempre después del último ítem (`css/style.css`). Validado simulando una ventana de 1280×480: el `<ul>` scrollea internamente y el botón nunca se superpone con "Configuración". |
+| 8-7 | El spinner de carga/guardado nunca se visualizaba mientras se esperaba respuesta | Completado | Front | El concepto ya existía a medias (texto "Cargando..."/"Guardando..." y una clase `is-loading` que se togglea en cada `modal*.js`) pero nunca había un spinner real: solo bajaba la opacidad del botón un 15%, imperceptible sobre un botón que además ya cambiaba de color por estar `disabled`. Se agregó una animación real (`@keyframes girar`) reutilizada en dos lugares: `.loading-state::before` (todas las cargas de listados/páginas completas, automático en toda la app sin tocar cada página) y `.modal-content button.is-loading::before` (botones "Guardar" de los modales). También se agregó el toggle de `is-loading` a `modalSorteo.js` y `modalJugadorLote.js`, que no lo tenían (`css/style.css`, `css/modales.css`, `js/modalSorteo.js`, `js/modalJugadorLote.js`). |
+
+Verificación: los tres cambios se probaron cargando la app real (servida
+con Live Server en `127.0.0.1:5500`) en el navegador integrado, incluyendo
+una simulación de ventana angosta para confirmar el scroll del menú, una
+verificación de estilos computados del pseudo-elemento del spinner
+(`content`, `animation-name: girar`, dimensiones) y una captura visual del
+spinner tanto en un botón de modal como en un listado cargando, en modo
+claro y oscuro. No fue posible probar el flujo real de guardado contra el
+backend porque el contenedor de `mas-que-amigos` no estaba accesible
+desde este entorno en el momento de la prueba (`ERR_BLOCKED_BY_CLIENT` /
+"Failed to fetch"), algo ajeno a estos cambios: la app ya maneja ese caso
+mostrando un mensaje de error en el mismo contenedor, sin quedar en
+blanco. Todos los `.js` modificados se verificaron además con
+`node --check`.
