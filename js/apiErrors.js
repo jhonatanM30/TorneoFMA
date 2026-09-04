@@ -55,6 +55,14 @@ export function construirHeaders() {
         headers.Authorization = `Bearer ${window.APP_CONFIG.AUTH_TOKEN}`;
     }
 
+    // FRONTEND_VISION.md Fase7: el backend (DirectorTecnicoInterceptor)
+    // exige este header en todo método que no sea de consulta (POST/PUT/
+    // DELETE). Se agrega igual que AUTH_TOKEN, en un solo lugar, para que
+    // ningún Service tenga que ocuparse de esto.
+    if (window.APP_CONFIG?.DIRECTOR_TECNICO_KEY) {
+        headers["X-Director-Tecnico-Key"] = window.APP_CONFIG.DIRECTOR_TECNICO_KEY;
+    }
+
     return headers;
 }
 
@@ -67,6 +75,12 @@ export function construirHeadersMultipart() {
 
     if (window.APP_CONFIG?.AUTH_TOKEN) {
         headers.Authorization = `Bearer ${window.APP_CONFIG.AUTH_TOKEN}`;
+    }
+
+    // Ver comentario equivalente en construirHeaders(): la subida del
+    // escudo del equipo (POST) también es un método de escritura.
+    if (window.APP_CONFIG?.DIRECTOR_TECNICO_KEY) {
+        headers["X-Director-Tecnico-Key"] = window.APP_CONFIG.DIRECTOR_TECNICO_KEY;
     }
 
     return headers;

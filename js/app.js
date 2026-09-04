@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", function() {
     loadComponent("components/menu.html", "menu-container", function () {
         marcarPaginaActiva();
         inicializarInterruptorTema();
+        inicializarBotonRol();
     });
     loadComponent("components/footer.html", "footer-container");
 });
@@ -55,6 +56,32 @@ function inicializarInterruptorTema() {
             // igual se aplica para esta carga de página, solo no persiste.
         }
 
+        actualizarTexto();
+    });
+}
+
+// FRONTEND_VISION.md Fase7: botón del menú para (re)indicar el rol de
+// Director Técnico. El prompt en sí vive en js/config.js
+// (window.MQA_preguntarRolDirectorTecnico) porque ese archivo es el dueño
+// de window.APP_CONFIG; acá solo se refleja el estado actual en el botón.
+function inicializarBotonRol() {
+    const boton = document.getElementById("btn-rol");
+    const texto = document.getElementById("btn-rol-texto");
+    if (!boton) return;
+
+    const actualizarTexto = () => {
+        const esDirectorTecnico = Boolean(window.APP_CONFIG?.DIRECTOR_TECNICO_KEY);
+        if (texto) {
+            texto.textContent = esDirectorTecnico ? "Rol: Director Técnico" : "Rol: Consulta";
+        }
+    };
+
+    actualizarTexto();
+
+    boton.addEventListener("click", () => {
+        if (typeof window.MQA_preguntarRolDirectorTecnico === "function") {
+            window.MQA_preguntarRolDirectorTecnico();
+        }
         actualizarTexto();
     });
 }
