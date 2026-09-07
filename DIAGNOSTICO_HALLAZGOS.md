@@ -210,3 +210,36 @@ una y el elemento solo queda visible cuando se cumplen las dos
 condiciones a la vez, confirmando que el atributo nuevo (que solo toca
 el estilo inline) convive sin pisar la lógica existente. `node --check`
 sobre los seis `.js` modificados.
+
+## Validacion proactiva de la clave de Director Tecnico (sugerencia del usuario, septiembre 2026)
+
+Sobre la mejora anterior (8-12, ocultar los botones de escritura en modo
+Espectador), el usuario planteo que igual haria falta un mecanismo que
+valide la clave contra la definida en el backend en el momento de
+ingresarla, y no deje pasar a Director Tecnico si esta mal -en vez de
+cualquier otro mecanismo alternativo-, autorizando explicitamente tocar
+el backend si hacia falta.
+
+| # | Hallazgo | Estado | Lado | Justificación |
+|---|---|---|---|---|
+| 8-13 | Debería existir un mecanismo que valide si la clave de Director Técnico es correcta respecto a la definida, y no dejar pasar si no lo es | Completado | Ambos | Backend: nuevo `DirectorTecnicoController` con `POST /api/director-tecnico/validar` (`fix(fase8-back-auth): fase8-13`). No valida nada por su cuenta: al ser un método POST, el `DirectorTecnicoInterceptor` ya existente (fase7-01) exige y compara el header `X-Director-Tecnico-Key` *antes* de que la petición llegue al controlador (está registrado sobre todo `/api/**`). Si el método llega a ejecutarse es porque la clave ya fue validada (devuelve 200); si es incorrecta o falta, el interceptor corta con 401 antes de llegar ahí. Se evitó así duplicar la lógica de comparación de la clave en un segundo lugar. Frontend: `MQA_preguntarRolDirectorTecnico` (`js/config.js`) pasó a ser asíncrona — si se ingresa una clave no vacía, hace ese `POST` con la clave en el header antes de aceptar nada; solo si el backend responde 200 se guarda la clave y se entra como Director Técnico. Si responde 401 se avisa con un mensaje explícito ("la clave ingresada no es correcta") y se sigue en Espectador; si no hay conexión con el backend se avisa con un mensaje distinto (no se sabe si la clave es correcta o no) y también se sigue en Espectador — nunca se deja pasar sin poder confirmarla. `js/app.js` ahora espera (`await`) ese resultado antes de refrescar el botón de Rol, para no mostrar "Director Técnico" ni un instante antes de tiempo. El mecanismo reactivo de 8-9 (revertir a Espectador ante un 401 en una escritura real) se mantiene sin cambios, como respaldo para el caso borde de que la clave deje de ser válida *después* de haber sido aceptada (por ejemplo, si cambia la configuración del backend mientras la sesión ya estaba abierta). |
+
+Verificación: no fue posible compilar el backend con Maven desde este
+entorno (sin acceso de red a `repo.maven.apache.org` para `mvnw` ni
+caché local en `~/.m2`, la misma limitación ya documentada más arriba
+en este mismo archivo); se revisó `DirectorTecnicoController.java`
+línea por línea contra el estilo ya establecido en los demás
+controladores del proyecto (`RegistroInformativoController` como
+referencia) y se comprobó el balance de llaves/paréntesis con un
+script. Queda pendiente correr `mvn test`/`mvn compile` en un entorno
+con acceso a Maven Central antes de desplegar. El frontend se probó en
+el navegador integrado simulando las tres respuestas posibles del
+endpoint nuevo (mockeando `window.fetch`, porque el backend real no era
+alcanzable desde este entorno de prueba): clave correcta (200) entra
+como Director Técnico; clave incorrecta (401) y falla de conexión se
+quedan en Espectador, cada una con su propio mensaje; y dejar el campo
+vacío no llega a llamar al backend. También se probó el flujo completo
+a través del botón de Rol real (no solo la función por separado),
+confirmando que el botón y la visibilidad de "Configuración" terminan
+en el estado correcto en los dos casos. `node --check` en `js/config.js`
+y `js/app.js`.
