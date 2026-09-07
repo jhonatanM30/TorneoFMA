@@ -181,3 +181,32 @@ Director-Tecnico-Key contra el backend real) porque el contenedor de
 (`ERR_BLOCKED_BY_CLIENT`), igual que en la ronda anterior. Todos los
 `.js` modificados (`js/config.js`, `js/app.js`, `js/apiErrors.js`) se
 verificaron además con `node --check`.
+
+## Mejora adicional sobre la segunda ronda (sugerencia del usuario, septiembre 2026)
+
+Al revisar la corrección anterior (8-8 a 8-11), el usuario señaló una
+mejora práctica: en modo Espectador la app debería bloquear, ocultar o
+avisar que una acción no está permitida ANTES de que alguien llene un
+formulario completo, en vez de dejarlo llenar todo para recién avisarle
+al guardar (vía el 401 reactivo de 8-9).
+
+| # | Hallazgo | Estado | Lado | Justificación |
+|---|---|---|---|---|
+| 8-12 | En modo Espectador debería bloquearse/ocultarse/avisarse que las acciones de Director Técnico no están disponibles, en vez de dejar llenar el formulario para recién fallar al guardar | Completado | Front | Se optó por ocultar directamente los controles que disparan una escritura (crear, editar, eliminar, sortear, iniciar/finalizar partido, registrar cambio de jugador) cuando no hay una clave de Director Técnico activa, en vez de dejarlos visibles y fallar recién al guardar. Cada botón/formulario relevante se marca con el atributo `data-requiere-dt="true"` (`equipos.html`, `jugadores.html`, `partidos.html`, `alineaciones.html`, `estadisticas.html`, `configuracion.html` para los botones fijos; `js/equipos.js`, `js/jugadores.js`, `js/partidos.js`, `js/estadisticas.js`, `js/configuracion.js` para los botones de fila generados dinámicamente), y una única función nueva en `js/app.js` (`actualizarVisibilidadAccionesDirectorTecnico`) los oculta o muestra según el rol activo. El problema de que la mayoría de esos botones no existen todavía cuando la página recién carga (se generan después, cuando cada pantalla termina de traer sus datos del backend) se resolvió con un `MutationObserver` sobre `document.body` que reaplica el mismo criterio cada vez que aparece contenido nuevo, sin que ninguna pantalla tenga que acordarse de llamarlo a mano. El mecanismo reactivo de 8-9 (revertir a Espectador ante un 401) se mantiene sin cambios como respaldo, para el caso borde de que la clave guardada deje de ser válida mientras el formulario ya estaba abierto. |
+
+Verificación: probado en el navegador integrado sobre la app real
+(Live Server, `127.0.0.1:5500`). Se confirmó que, como Espectador, tanto
+los botones fijos (por ejemplo "Programar partido", "Sortear partidos")
+como una fila de ejemplo inyectada dinámicamente con botones "Editar" /
+"Eliminar" / "Iniciar partido" quedan ocultos sin necesidad de llamar a
+ninguna función a mano (el `MutationObserver` los agarra solo). Al
+simular el ingreso como Director Técnico todos reaparecen, y al cerrar
+sesión vuelven a ocultarse, sin recargar la página. También se verificó
+específicamente el caso de "Registrar cambio" en Alineaciones, que ya
+tenía su propio criterio de visibilidad independiente (solo si el
+partido está `EN_CURSO`, controlado con el atributo `hidden`): las
+cuatro combinaciones de rol × estado del partido se probaron una por
+una y el elemento solo queda visible cuando se cumplen las dos
+condiciones a la vez, confirmando que el atributo nuevo (que solo toca
+el estilo inline) convive sin pisar la lógica existente. `node --check`
+sobre los seis `.js` modificados.
