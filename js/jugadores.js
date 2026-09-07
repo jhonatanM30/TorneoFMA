@@ -158,8 +158,8 @@ function renderJugadores(container, jugadores, onCambio) {
                 <p><strong>Equipo:</strong> <span class="punto-equipo" style="background-color: ${colorEquipo};"></span>${nombreEquipo}</p>
                 <p><strong>Edad:</strong> ${jugador.edad ?? "-"}</p>
                 <div class="jugador-actions">
-                    <button class="btn btn-small btn-editar" data-id="${jugador.id ?? ""}">Editar</button>
-                    <button class="btn btn-small btn-eliminar" data-id="${jugador.id ?? ""}">Eliminar</button>
+                    <button class="btn btn-small btn-editar" data-requiere-dt="true" data-id="${jugador.id ?? ""}">Editar</button>
+                    <button class="btn btn-small btn-eliminar" data-requiere-dt="true" data-id="${jugador.id ?? ""}">Eliminar</button>
                 </div>
             </article>
         `;

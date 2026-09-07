@@ -147,9 +147,9 @@ document.addEventListener("DOMContentLoaded", async function () {
             const estado = partido.estado || "PROGRAMADO";
             const estadoEtiqueta = ETIQUETAS_ESTADO[estado] || estado;
             const botonEstado = estado === "PROGRAMADO"
-                ? `<button class="btn btn-small btn-iniciar-partido" data-id="${partido.id ?? ""}">Iniciar partido</button>`
+                ? `<button class="btn btn-small btn-iniciar-partido" data-requiere-dt="true" data-id="${partido.id ?? ""}">Iniciar partido</button>`
                 : estado === "EN_CURSO"
-                    ? `<button class="btn btn-small btn-finalizar-partido" data-id="${partido.id ?? ""}">Finalizar partido</button>`
+                    ? `<button class="btn btn-small btn-finalizar-partido" data-requiere-dt="true" data-id="${partido.id ?? ""}">Finalizar partido</button>`
                     : "";
 
             return `
@@ -169,8 +169,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                     <div class="partido-actions">
                         <a class="btn btn-small btn-alineacion" href="alineaciones.html?idPartido=${partido.id ?? ""}">Alineación</a>
                         ${botonEstado}
-                        <button class="btn btn-small btn-editar" data-id="${partido.id ?? ""}">Editar</button>
-                        <button class="btn btn-small btn-eliminar" data-id="${partido.id ?? ""}">Eliminar</button>
+                        <button class="btn btn-small btn-editar" data-requiere-dt="true" data-id="${partido.id ?? ""}">Editar</button>
+                        <button class="btn btn-small btn-eliminar" data-requiere-dt="true" data-id="${partido.id ?? ""}">Eliminar</button>
                     </div>
                 </article>
             `;

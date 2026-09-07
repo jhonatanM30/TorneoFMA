@@ -80,7 +80,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             <article class="registro-card">
                 <div class="registro-card-header">
                     <h3>${registro.titulo}</h3>
-                    <button class="btn btn-small btn-eliminar" data-id="${registro.id}">Eliminar</button>
+                    <button class="btn btn-small btn-eliminar" data-requiere-dt="true" data-id="${registro.id}">Eliminar</button>
                 </div>
                 <p class="registro-fecha">${formatearFecha(registro.fechaPublicacion)}</p>
                 <p class="registro-contenido">${registro.contenido}</p>

@@ -101,6 +101,7 @@ function inicializarBotonRol() {
             ? "Estás como Director Técnico. Click para cerrar sesión y volver a Espectador."
             : "Estás en modo Espectador (solo lectura). Click para ingresar como Director Técnico.";
         actualizarVisibilidadConfiguracion(esDirectorTecnico);
+        actualizarVisibilidadAccionesDirectorTecnico();
     };
 
     // Expuesta para que js/config.js (cierre reactivo de sesión ante un
@@ -109,6 +110,26 @@ function inicializarBotonRol() {
     window.MQA_actualizarBotonRol = actualizarEstado;
 
     actualizarEstado();
+
+    // Hallazgo post-despliegue (tercera ronda): antes, un Hincha podía
+    // llenar por completo un formulario de creación/edición y recién al
+    // guardar se enteraba (por el 401 reactivo de js/apiErrors.js) de que
+    // no tenía permiso -mejor evitar que llegue a esa situación. Los
+    // botones/formularios que disparan una escritura (crear, editar,
+    // eliminar, sortear, iniciar/finalizar partido, registrar cambio,
+    // etc.) se marcan en cada pantalla con el atributo data-requiere-dt, y
+    // actualizarVisibilidadAccionesDirectorTecnico() los oculta o muestra
+    // según el rol activo. El problema es que la mayoría de esos
+    // elementos NO existen todavía en este punto -se generan recién
+    // cuando cada pantalla termina de cargar sus datos, en su propio
+    // script (equipos.js, jugadores.js, etc.), después de que este script
+    // ya corrió una vez-. Un MutationObserver reaplica el mismo criterio
+    // cada vez que aparece contenido nuevo en la página, para que ninguna
+    // pantalla tenga que acordarse de llamarlo a mano.
+    const observadorContenidoNuevo = new MutationObserver(() => {
+        actualizarVisibilidadAccionesDirectorTecnico();
+    });
+    observadorContenidoNuevo.observe(document.body, { childList: true, subtree: true });
 
     boton.addEventListener("click", () => {
         const esDirectorTecnico = Boolean(window.APP_CONFIG?.DIRECTOR_TECNICO_KEY);
@@ -151,6 +172,23 @@ function actualizarVisibilidadConfiguracion(esDirectorTecnico) {
 // Función para cargar un componente HTML en un contenedor. callback (opcional)
 // se ejecuta una vez insertado el HTML, útil para inicializar cosas dentro
 // del componente recién cargado (por ejemplo, resaltar el enlace activo).
+// Oculta/muestra cualquier control que dispare una escritura al backend
+// (crear, editar, eliminar, sortear, iniciar/finalizar partido, registrar
+// cambio, etc.) según el rol activo. Cada pantalla solo tiene que marcar
+// el control con el atributo data-requiere-dt="true" -sea un botón fijo
+// en el HTML (por ejemplo "Agregar equipo") o uno generado dinámicamente
+// en su propio JS (por ejemplo "Editar"/"Eliminar" de cada fila)-, sin
+// tener que reimplementar acá la lógica de mostrar/ocultar. Se llama al
+// cargar la página, cada vez que cambia el rol (login, logout manual o
+// reactivo ante un 401) y cada vez que aparece contenido nuevo en la
+// página (ver el MutationObserver en inicializarBotonRol).
+function actualizarVisibilidadAccionesDirectorTecnico() {
+    const esDirectorTecnico = Boolean(window.APP_CONFIG?.DIRECTOR_TECNICO_KEY);
+    document.querySelectorAll("[data-requiere-dt]").forEach((elemento) => {
+        elemento.style.display = esDirectorTecnico ? "" : "none";
+    });
+}
+
 function loadComponent(url, containerId, callback) {
     fetch(url)
         .then(response => response.text())
