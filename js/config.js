@@ -70,11 +70,26 @@ function guardarClaveDirector(clave) {
     }
 }
 
-// Pide la clave para ENTRAR como Director Técnico. Solo debe invocarse
-// mientras se está en modo Espectador (el botón de Rol en js/app.js decide
-// cuándo llamar esto vs. cuándo cerrar sesión) para no dejar que un typo
-// pise en silencio una clave que ya funcionaba.
-window.MQA_preguntarRolDirectorTecnico = function preguntarRolDirectorTecnico() {
+// Pide la clave para ENTRAR como Director Técnico y la valida contra el
+// backend antes de aceptarla. Solo debe invocarse mientras se está en
+// modo Espectador (el botón de Rol en js/app.js decide cuándo llamar esto
+// vs. cuándo cerrar sesión) para no dejar que un typo pise en silencio
+// una clave que ya funcionaba.
+//
+// Hallazgo post-despliegue (tercera ronda): antes se aceptaba cualquier
+// texto que el usuario escribiera como si fuera la clave correcta, sin
+// comprobar nada contra el backend -recién se descubría que estaba mal
+// al intentar guardar algo real (ver el 401 reactivo más abajo en
+// MQA_cerrarSesionDirectorTecnico / js/apiErrors.js). El usuario pidió,
+// con razón, que la app no "deje pasar" a Director Técnico con una clave
+// incorrecta desde el primer momento. Para eso se agregó en el backend
+// un endpoint dedicado (POST /api/director-tecnico/validar,
+// DirectorTecnicoController) que no valida nada por sí mismo: al ser un
+// método POST, DirectorTecnicoInterceptor ya exige y compara el header
+// X-Director-Tecnico-Key antes de que la petición lo alcance, así que si
+// el backend responde 200 la clave es correcta, y si responde 401 no lo
+// es -sin duplicar la lógica de comparación acá en el frontend.
+window.MQA_preguntarRolDirectorTecnico = async function preguntarRolDirectorTecnico() {
     const respuesta = window.prompt(
         "¿Eres Director Técnico?\n\nIngresa la clave para poder crear, editar o eliminar información. " +
         "Si solo vas a ver el torneo (Espectador), deja este campo vacío y presiona Aceptar.",
@@ -82,8 +97,39 @@ window.MQA_preguntarRolDirectorTecnico = function preguntarRolDirectorTecnico() 
     );
 
     // Cancelar el prompt (null) se trata igual que dejarlo vacío: rol de
-    // Espectador.
+    // Espectador, sin necesidad de validar nada contra el backend.
     const clave = respuesta && respuesta.trim() ? respuesta.trim() : null;
+    if (!clave) {
+        guardarClaveDirector(null);
+        window.APP_CONFIG.DIRECTOR_TECNICO_KEY = null;
+        return null;
+    }
+
+    let esValida = false;
+    try {
+        const respuestaValidacion = await fetch(`${window.APP_CONFIG.API_BASE_URL}/director-tecnico/validar`, {
+            method: "POST",
+            headers: { "X-Director-Tecnico-Key": clave }
+        });
+        esValida = respuestaValidacion.ok;
+    } catch (error) {
+        // No hay conexión con el backend: no se puede confirmar si la
+        // clave es correcta o no, así que -por seguridad- no se deja
+        // pasar a Director Técnico. Es un caso distinto de una clave
+        // incorrecta (acá no se sabe cuál de las dos cosas pasó), por eso
+        // el mensaje es otro.
+        window.alert(
+            "No se pudo validar la clave porque no hay conexión con el servidor. " +
+            "Intenta de nuevo cuando el servidor esté disponible; por ahora seguís en modo Espectador."
+        );
+        return null;
+    }
+
+    if (!esValida) {
+        window.alert("La clave ingresada no es correcta. Seguís en modo Espectador (solo lectura).");
+        return null;
+    }
+
     guardarClaveDirector(clave);
     window.APP_CONFIG.DIRECTOR_TECNICO_KEY = clave;
     return clave;

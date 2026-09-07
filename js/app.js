@@ -131,7 +131,7 @@ function inicializarBotonRol() {
     });
     observadorContenidoNuevo.observe(document.body, { childList: true, subtree: true });
 
-    boton.addEventListener("click", () => {
+    boton.addEventListener("click", async () => {
         const esDirectorTecnico = Boolean(window.APP_CONFIG?.DIRECTOR_TECNICO_KEY);
 
         if (esDirectorTecnico) {
@@ -149,8 +149,14 @@ function inicializarBotonRol() {
             return;
         }
 
+        // MQA_preguntarRolDirectorTecnico (js/config.js) ahora es
+        // asíncrona: valida la clave contra el backend antes de
+        // aceptarla (hallazgo post-despliegue, tercera ronda), así que
+        // hay que esperar su resultado antes de refrescar el botón -si
+        // no, el botón podría llegar a mostrar "Director Técnico" un
+        // instante antes de saber si la clave era correcta.
         if (typeof window.MQA_preguntarRolDirectorTecnico === "function") {
-            window.MQA_preguntarRolDirectorTecnico();
+            await window.MQA_preguntarRolDirectorTecnico();
         }
         actualizarEstado();
     });
