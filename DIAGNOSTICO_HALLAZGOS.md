@@ -243,3 +243,64 @@ a través del botón de Rol real (no solo la función por separado),
 confirmando que el botón y la visibilidad de "Configuración" terminan
 en el estado correcto en los dos casos. `node --check` en `js/config.js`
 y `js/app.js`.
+
+## Fase 9 — reglas de negocio de Partidos/Alineaciones/Estadísticas/Registro Informativo + galería de Inicio (sugerencia del usuario, septiembre 2026)
+
+El usuario pidió un conjunto de reglas de negocio y mejoras de UX
+repartidas en cinco pantallas, la mayoría ya insinuadas por el modelo de
+datos existente pero nunca impuestas ni en el backend ni en el frontend.
+Se autorizó explícitamente ajustar el backend donde hiciera falta
+("si debes reajustar algo en el back hazlo"). Todo lo de esta sección se
+implementó en el backend (`mas-que-amigos`, commit `9268da7`, precedido
+por `88b39ee` para un controlador pendiente de Fase 8) y en el frontend
+(`MasQueAmigos-Torneo`, este commit).
+
+| # | Hallazgo | Estado | Lado | Justificación |
+|---|---|---|---|---|
+| 9-1 | Un partido no debería poder iniciarse sin al menos 7 titulares por equipo | Completado | Back | `PartidoService.iniciarPartido` no validaba nada sobre la alineación antes de pasar a `EN_CURSO`. Se agregó la constante `MINIMO_TITULARES_PARA_INICIAR = 7` y un conteo de titulares por equipo (`AlineacionRepository.contarTitularesPorEquipo`, ya existente) antes de permitir el cambio de estado; si algún equipo no llega a 7 titulares, se rechaza con un mensaje explícito indicando cuál equipo falta. |
+| 9-2 | Un partido FINALIZADO no debería poder editarse ni eliminarse | Completado | Ambos | Backend: `PartidoService.actualizarPartido` y `eliminar` ahora rechazan la operación si `estado == FINALIZADO`. Frontend: `js/partidos.js` omite directamente del HTML (no solo oculta) los botones Editar/Eliminar de una tarjeta FINALIZADA, y `js/modalPartido.js` deshabilita el botón de guardar y muestra un aviso si de todos modos se abre el modal de edición sobre un partido ya finalizado (defensa en profundidad además del rechazo del backend). |
+| 9-3 | Los goles del partido deben salir de lo registrado en Estadística, no ingresarse a mano en Partidos | Completado | Ambos | Backend: `PartidoDTO.golesLocal`/`golesVisitante` pasaron a `@JsonProperty(access = READ_ONLY)` (el cliente ya no puede escribirlos) y `PartidoService.guardar` los fuerza a 0 al crear; el nuevo `PartidoService.recalcularGoles(idPartido)` sencillamente suma `EstadisticaRepository.sumarGolesPorEquipo` por cada equipo y persiste el resultado, y se invoca desde `EstadisticaService` cada vez que se crea, edita o elimina una estadística. Frontend: `components/modal-partido.html`/`js/modalPartido.js` quitaron los inputs numéricos de goles y muestran en su lugar un texto informativo con el marcador actual, aclarando que se corrige desde Estadísticas. |
+| 9-4 | Al eliminar un partido deberían borrarse en cascada su alineación, estadísticas y cambios de jugador | Completado | Back | El esquema no tiene `ON DELETE CASCADE` en ninguna tabla relacionada con `partido`. `PartidoService.eliminar` ahora es `@Transactional` y borra explícitamente, en orden, `CambioJugadorRepository.deleteByPartidoId`, `EstadisticaRepository.deleteByPartidoId` y `AlineacionRepository.eliminarPorPartido` (esta última como `@Modifying @Query` porque `Alineacion` usa `@EmbeddedId` y no admite un método derivado) antes de borrar el partido mismo. |
+| 9-5 | Debería poder alinearse en lote en vez de un jugador a la vez | Completado | Front | El backend no ganó un endpoint de creación masiva: `js/modalAlineacion.js` se rediseñó como un checklist (un jugador por fila con casilla + selector de rol) que dispara una petición `POST /api/alineaciones` por cada jugador marcado, en secuencia, igual que ya hacía el Sorteo de partidos. Si alguna falla a mitad de camino (por ejemplo, cupo de titulares superado), las que sí se guardaron no se pierden: se informa un resumen (cuántas se guardaron, cuáles fallaron y por qué) y el modal queda abierto con el checklist actualizado para reintentar solo las pendientes, en vez de cerrar y descartar todo. |
+| 9-6 | Debería poder editarse la alineación: pasar un suplente a titular y viceversa | Completado | Ambos | Backend: nuevo `PUT /api/alineaciones/{idPartido}/{idJugador}` (`AlineacionService.actualizarAlineacion`), que solo permite el cambio si el partido sigue `PROGRAMADO` y revalida el cupo máximo de titulares únicamente cuando la transición es de suplente a titular (no en una edición que no cambia de rol). Frontend: `js/alineaciones.js` agrega, junto a cada jugador alineado, un botón "Pasar a titular"/"Pasar a suplente" que llama a ese endpoint y refresca la vista. |
+| 9-7 | Debería poder eliminarse un jugador de la alineación si el partido no ha iniciado | Completado | Ambos | Backend: nuevo `DELETE /api/alineaciones/{idPartido}/{idJugador}` (`AlineacionService.eliminarAlineacion`), rechazado si el partido ya no está `PROGRAMADO`. Frontend: botón "Quitar" junto a cada jugador en `js/alineaciones.js`, con confirmación previa. Ambos botones nuevos (9-6 y 9-7) se muestran solo mientras el partido está `PROGRAMADO`; con el partido ya iniciado, los cambios de rol pasan por "Registrar cambio" (`CambioJugadorService`), que ya existía y sí queda auditado con minuto. |
+| 9-8 | El historial de cambios de un partido debería poder consultarse también desde Partidos, no solo desde Alineaciones | Completado | Front | En vez de duplicar la pantalla de historial, cada tarjeta de `js/partidos.js` ahora incluye un resumen de "novedades" (goles/asistencias/tarjetas por jugador, tomado de las mismas Estadísticas ya cargadas) directamente en la lista de Partidos, sin necesidad de navegar a Alineaciones para tener una primera lectura de lo ocurrido en el partido; el historial completo con minuto a minuto sigue viviendo en Alineaciones (`historial-lista`), que ya cubría ese detalle. |
+| 9-9 | Una vez creado un registro de Estadística para un jugador en un partido, los siguientes cambios se deberían gestionar desde ese mismo registro en vez de crear uno nuevo | Completado | Ambos | Backend: nuevo `GET /api/estadisticas/buscar?idJugador=&idPartido=` (`EstadisticaService.buscarExistente`) y `EstadisticaService.guardar` ahora rechaza un segundo registro para el mismo jugador+partido. Frontend: `js/modalEstadistica.js` consulta ese endpoint apenas se elige un jugador y, si ya existe un registro, cambia el modal a modo edición automáticamente (título, botón y campos precargados) en vez de dejar seguir en modo creación; el botón "Editar" de la tabla abre directamente en ese mismo modo, con partido y jugador ya fijos. |
+| 9-10 | El registro de estadística debe reflejarse en el marcador del partido y seguir reflejándose al editarlo o eliminarlo | Completado | Back | `EstadisticaService.guardar`, el nuevo `actualizar(id, dto)` (`PUT /{id}`) y `eliminar(id)` llaman los tres a `PartidoService.recalcularGoles` después de persistir el cambio, así que el marcador del partido siempre queda consistente con la suma de goles registrados, sin importar si el cambio fue crear, editar o borrar una estadística. También se agregó la validación de que solo se puede registrar/editar una estadística si el partido está `EN_CURSO` o `FINALIZADO` (no `PROGRAMADO`), avisada de una vez en el selector de jugador del modal en vez de dejar fallar recién al guardar. |
+| 9-11 | El registro informativo debería poder editarse, no solo crearse y eliminarse | Completado | Ambos | Backend: nuevo `PUT /api/registro-informativo/{id}` (`RegistroInformativoService.actualizar`), que solo actualiza título y contenido, dejando `fechaPublicacion` intacta. Frontend: `js/modalRegistroInformativo.js` gana un modo edición (igual patrón que Estadística/Alineación: id oculto, título del modal dinámico) y `js/configuracion.js` agrega un botón "Editar" junto al ya existente "Eliminar" en cada tarjeta. |
+| 9-12 | Debería poder subirse una galería de fotos desde Configuración, guardada donde están las actuales, y mostrarse en Inicio como un carrusel más dinámico que las tarjetas fijas | Completado | Ambos | Backend: nueva entidad `ImagenGaleria` (tabla `imagen_galeria`, migración `V6`) y `ImagenGaleriaController` (`/api/galeria`: listar, subir con multipart, eliminar), reutilizando el mismo patrón de subida a `uploads/` que ya usaba el escudo de Equipo — las 5 imágenes estáticas anteriores no se migraron (la galería nace vacía; las fotos nuevas se suben desde la app). Frontend: `services/GaleriaService.js` (nuevo) consume esos tres endpoints; `configuracion.html`/`js/configuracion.js` ganan una sección para subir, listar en grilla y eliminar fotos; `index.html`/`js/dashboard.js` reemplazan las 5 imágenes fijas (`.main-image`) por un carrusel real armado en JS puro (sin librería): transición por opacidad entre `.carrusel-slide`, flechas de anterior/siguiente, puntos de navegación y avance automático cada 5 segundos que se reinicia ante cualquier interacción manual. |
+
+Verificación: no fue posible compilar el backend con Maven desde este
+entorno (misma limitación de red ya documentada más arriba en este
+archivo); se revisaron los 18 archivos `.java` tocados línea por línea
+contra las convenciones ya establecidas en los archivos hermanos del
+proyecto, y se verificó el balance de llaves/paréntesis/corchetes con un
+script. Los 13 archivos `.js` nuevos o modificados pasaron `node --check`
+sin errores. El frontend se probó en el navegador integrado sirviendo la
+app con un servidor estático local y simulando las respuestas del
+backend (`window.fetch` interceptado solo para URLs `/api/`, dejando
+pasar el resto — como la carga de los propios componentes HTML — al
+`fetch` nativo), ya que el backend real seguía sin ser alcanzable desde
+este entorno de prueba (`ERR_BLOCKED_BY_CLIENT`/"Failed to fetch", igual
+que en rondas anteriores). Con esos datos de prueba se confirmaron
+específicamente: que una tarjeta de partido FINALIZADO no incluye en el
+HTML los botones Editar/Eliminar y sí su resumen de novedades, mientras
+uno PROGRAMADO los muestra (ocultos por el mecanismo de rol existente);
+que el modal de Partido bloquea el guardado y avisa sobre un partido
+finalizado, y que en cualquier partido editable muestra el marcador
+actual como texto informativo en vez de inputs; que el modal de
+Estadística detecta un registro existente al elegir jugador y cambia
+solo a modo edición (y vuelve a modo creación si se elige otro jugador
+sin registro previo), tanto disparado por el propio modal como al abrir
+directamente en modo edición desde la tabla; que el checklist de
+alineación en lote excluye a los jugadores ya alineados, envía una
+petición por jugador marcado, y ante una falla parcial dejó guardado lo
+que sí pudo mientras deja el modal abierto con el checklist reducido
+para reintentar — confirmado también el caso sin errores, que sí cierra
+el modal; que los botones nuevos "Pasar a titular/suplente" y "Quitar"
+llaman a los endpoints correspondientes y refrescan la alineación en
+pantalla; que el registro informativo abre en modo edición con los
+campos precargados; y que la galería sube una foto nueva, la lista y
+permite eliminarla, reflejándose el carrusel de Inicio con las flechas,
+los puntos y el avance automático funcionando (navegación manual
+verificada con clicks simulados sobre cada control).
