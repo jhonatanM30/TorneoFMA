@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>COPA DE FÚTBOL Más Que Amigos</title>    
+    <title>COPA DE FÚTBOL Más Que Amigos</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
@@ -16,13 +16,13 @@
     <script defer type="module" src="js/dashboard.js"></script>
 </head>
 <body data-page="index">
-   
+
  <!-- Aquí se cargará dinámicamente el menú -->
  <div id="menu-container"></div>
 
     <!-- Contenedor principal -->
     <div class="main-content">
-        
+
         <!-- Banner superior -->
         <header class="banner banner--hero">
             <h2>⚽ COPA DE FÚTBOL MÁS QUE AMIGOS 🏆</h2>
@@ -79,14 +79,14 @@
 
         <h3 class="section-title">Galería del torneo</h3>
 
-        <!-- Imagen principal -->
-        <section class="main-image">
-            <img src="assets/comark.jpg" alt="Imagen del torneo">
-            <img src="assets/mackalister.jpg" alt="Imagen del torneo2">
-            <img src="assets/losdel8.jpg" alt="Imagen del torneo3">
-            <img src="assets/mrl.jpg" alt="Imagen del torneo5">
-            <img src="assets/socios.jpg" alt="Imagen del torneo4">
-           
+        <!-- Hallazgo post-despliegue (fase9): "Poder desde configuraciones
+             subir fotos y que aparezcan alli... y que sea en especie de
+             carrusel algo diferente a las card, mas dinamico". Reemplaza
+             las 5 imagenes fijas (assets/*.jpg) por un carrusel real
+             armado en js/dashboard.js con las fotos que se suban desde
+             Configuración (GaleriaService). -->
+        <section class="carrusel-galeria" id="carrusel-galeria">
+            <div class="loading-state">Cargando galería...</div>
         </section>
     </div>
      <!-- Aquí se cargará dinámicamente el footer -->

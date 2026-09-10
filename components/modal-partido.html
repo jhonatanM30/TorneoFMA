@@ -21,11 +21,14 @@
             <label for="partido-hora">Hora:</label>
             <input type="time" id="partido-hora" name="hora" required>
 
-            <label for="partido-goles-local">Goles Local:</label>
-            <input type="number" id="partido-goles-local" name="golesLocal" min="0" step="1" value="0" required>
-
-            <label for="partido-goles-visitante">Goles Visitante:</label>
-            <input type="number" id="partido-goles-visitante" name="golesVisitante" min="0" step="1" value="0" required>
+            <!-- Hallazgo post-despliegue (fase9): "los goles que se
+                 reflejan en partido deben ser ingresados por el registro
+                 de estadisticas... si se desea editar se debe editar por
+                 la estadistica registrada en estadisticas". Los goles ya
+                 no se capturan aqui: se muestran de solo lectura (cuando
+                 se esta editando un partido existente) para que quede
+                 claro donde consultarlos, y se editan desde Estadísticas. -->
+            <div id="partido-goles-info" class="form-status info" hidden></div>
 
             <label for="partido-fase">Fase:</label>
             <select id="partido-fase" name="fase">

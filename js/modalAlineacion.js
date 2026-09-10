@@ -7,6 +7,13 @@ const etiquetaPartido = (partido) => {
     return `${local} vs ${visitante} (${partido.fecha || "sin fecha"})`;
 };
 
+// Hallazgo post-despliegue (fase9): "se deberia permitir alinear en Lote,
+// creo que es mas optimo que 1 a 1 cada partido". El backend no ganó un
+// endpoint de creación masiva: se sigue usando el mismo POST
+// /api/alineaciones de siempre, pero ahora se manda una petición por cada
+// jugador marcado, en secuencia (mismo patrón ya usado por el Sorteo de
+// partidos), en vez de obligar a abrir el modal una vez por jugador.
+//
 // partidos/jugadores: listas ya cargadas por alineaciones.js.
 export function inicializarModalAlineacion({ partidos = [], jugadores = [], onAlineacionGuardada = () => {} } = {}) {
     const modalContainer = document.getElementById("modal-container");
@@ -28,8 +35,7 @@ export function inicializarModalAlineacion({ partidos = [], jugadores = [], onAl
             const submitButton = modal.querySelector("#alineacion-submit-btn");
             const submitText = modal.querySelector("#alineacion-submit-text");
             const selectPartido = modal.querySelector("#alineacion-partido");
-            const selectJugador = modal.querySelector("#alineacion-jugador");
-            const checkTitular = modal.querySelector("#alineacion-titular");
+            const listaJugadores = modal.querySelector("#alineacion-lista-jugadores");
 
             selectPartido.innerHTML = '<option value="">Seleccione un partido</option>' +
                 partidos.map((partido) => `<option value="${partido.id}">${etiquetaPartido(partido)}</option>`).join("");
@@ -44,11 +50,22 @@ export function inicializarModalAlineacion({ partidos = [], jugadores = [], onAl
             const setSavingState = (isSaving) => {
                 submitButton.disabled = isSaving;
                 submitButton.classList.toggle("is-loading", isSaving);
-                submitText.textContent = isSaving ? "Guardando..." : "Guardar";
+                submitText.textContent = isSaving ? "Guardando..." : "Guardar alineación";
             };
 
-            // Al elegir el partido: limita el select de jugador a los dos
-            // equipos que juegan ese partido y, además, excluye a los que ya
+            const filaJugador = (jugador) => `
+                <label class="alineacion-lote-fila">
+                    <input type="checkbox" class="alineacion-check" value="${jugador.id}">
+                    <span class="alineacion-lote-nombre">${jugador.nombre} <small>(${jugador.equipo?.nombre || ""})</small></span>
+                    <select class="alineacion-rol" data-id="${jugador.id}">
+                        <option value="suplente">Suplente</option>
+                        <option value="titular">Titular</option>
+                    </select>
+                </label>
+            `;
+
+            // Al elegir el partido: limita la lista a los jugadores de los
+            // dos equipos que juegan ese partido y excluye a los que ya
             // están alineados en él (el backend igual lo rechazaría por
             // duplicado, pero así se evita el viaje al servidor de una vez).
             const actualizarJugadoresDelPartido = async () => {
@@ -56,13 +73,11 @@ export function inicializarModalAlineacion({ partidos = [], jugadores = [], onAl
                 const partido = partidos.find((item) => String(item.id) === idPartido);
 
                 if (!partido) {
-                    selectJugador.innerHTML = '<option value="">Seleccione un partido primero</option>';
-                    selectJugador.disabled = true;
+                    listaJugadores.innerHTML = '<p class="empty-state">Seleccione un partido para ver los jugadores disponibles.</p>';
                     return;
                 }
 
-                selectJugador.innerHTML = '<option value="">Cargando jugadores...</option>';
-                selectJugador.disabled = true;
+                listaJugadores.innerHTML = '<p class="loading-state">Cargando jugadores disponibles...</p>';
 
                 const idsEquipos = [partido.equipoLocal?.id, partido.equipoVisitante?.id]
                     .filter((id) => id !== undefined && id !== null)
@@ -81,11 +96,9 @@ export function inicializarModalAlineacion({ partidos = [], jugadores = [], onAl
                     return idsEquipos.includes(idEquipoJugador) && !yaAlineados.includes(String(jugador.id));
                 });
 
-                selectJugador.disabled = false;
-                selectJugador.innerHTML = disponibles.length > 0
-                    ? '<option value="">Seleccione un jugador</option>' +
-                        disponibles.map((jugador) => `<option value="${jugador.id}">${jugador.nombre} (${jugador.equipo?.nombre || ""})</option>`).join("")
-                    : '<option value="">Los jugadores de ambos equipos ya están alineados</option>';
+                listaJugadores.innerHTML = disponibles.length > 0
+                    ? disponibles.map(filaJugador).join("")
+                    : '<p class="empty-state">Los jugadores de ambos equipos ya están alineados.</p>';
             };
 
             selectPartido.addEventListener("change", actualizarJugadoresDelPartido);
@@ -93,15 +106,13 @@ export function inicializarModalAlineacion({ partidos = [], jugadores = [], onAl
             const closeModal = () => {
                 modal.style.display = "none";
                 formAlineacion.reset();
-                selectJugador.innerHTML = '<option value="">Seleccione un partido primero</option>';
-                selectJugador.disabled = true;
+                listaJugadores.innerHTML = '<p class="empty-state">Seleccione un partido para ver los jugadores disponibles.</p>';
                 setStatus("");
             };
 
             window.abrirModalAlineacion = (idPartidoPreseleccionado = null) => {
                 formAlineacion.reset();
-                selectJugador.innerHTML = '<option value="">Seleccione un partido primero</option>';
-                selectJugador.disabled = true;
+                listaJugadores.innerHTML = '<p class="empty-state">Seleccione un partido para ver los jugadores disponibles.</p>';
                 setStatus("");
 
                 if (idPartidoPreseleccionado) {
@@ -125,33 +136,76 @@ export function inicializarModalAlineacion({ partidos = [], jugadores = [], onAl
             formAlineacion.addEventListener("submit", async (event) => {
                 event.preventDefault();
 
-                const payload = {
-                    idPartido: selectPartido.value ? Number(selectPartido.value) : null,
-                    idJugador: selectJugador.value ? Number(selectJugador.value) : null,
-                    titular: checkTitular.checked
-                };
+                const idPartido = selectPartido.value ? Number(selectPartido.value) : null;
+                if (!idPartido) {
+                    setStatus("Debe seleccionar un partido.", "error");
+                    return;
+                }
 
-                if (!payload.idPartido || !payload.idJugador) {
-                    setStatus("Debe seleccionar un partido y un jugador.", "error");
+                const seleccionados = Array.from(listaJugadores.querySelectorAll(".alineacion-check:checked")).map((checkbox) => {
+                    const idJugador = Number(checkbox.value);
+                    const selectRol = listaJugadores.querySelector(`.alineacion-rol[data-id="${idJugador}"]`);
+                    return { idJugador, titular: selectRol?.value === "titular" };
+                });
+
+                if (seleccionados.length === 0) {
+                    setStatus("Marca al menos un jugador para alinear.", "error");
                     return;
                 }
 
                 setSavingState(true);
                 setStatus("");
 
-                try {
-                    const resultado = await AlineacionService.crearAlineacion(payload);
+                // Alineación en lote = varias peticiones POST secuenciales
+                // (no hay endpoint de creación masiva en el backend, mismo
+                // criterio ya usado por el Sorteo de partidos). Se sigue
+                // aunque alguna falle (por ejemplo, cupo de 11 titulares
+                // superado a mitad de camino), para no perder las que sí
+                // se pudieron guardar, y se informa un resumen al final.
+                let exitosos = 0;
+                const errores = [];
 
-                    if (resultado) {
-                        formAlineacion.reset();
-                        closeModal();
-                        mostrarToast(resultado?.mensaje || "Jugador alineado correctamente.", "success");
-                        await onAlineacionGuardada();
+                for (const seleccion of seleccionados) {
+                    try {
+                        await AlineacionService.crearAlineacion({
+                            idPartido,
+                            idJugador: seleccion.idJugador,
+                            titular: seleccion.titular
+                        });
+                        exitosos += 1;
+                    } catch (error) {
+                        const jugador = jugadores.find((item) => String(item.id) === String(seleccion.idJugador));
+                        errores.push(`${jugador?.nombre || `Jugador #${seleccion.idJugador}`}: ${error.message || "no se pudo alinear"}`);
                     }
-                } catch (error) {
-                    setStatus(error.message || "Ocurrió un error al registrar la alineación.", "error");
-                } finally {
-                    setSavingState(false);
+                }
+
+                setSavingState(false);
+
+                if (exitosos > 0) {
+                    mostrarToast(
+                        errores.length === 0
+                            ? `${exitosos} jugador(es) alineado(s) correctamente.`
+                            : `${exitosos} jugador(es) alineado(s). ${errores.length} no se pudo(eron) alinear.`,
+                        errores.length === 0 ? "success" : "info"
+                    );
+                }
+
+                if (errores.length > 0) {
+                    setStatus(errores.join(" "), "error");
+                }
+
+                if (exitosos > 0) {
+                    await onAlineacionGuardada();
+                }
+
+                if (errores.length === 0) {
+                    formAlineacion.reset();
+                    closeModal();
+                } else {
+                    // Se deja el modal abierto (con el partido ya elegido)
+                    // para que se pueda reintentar solo con los jugadores
+                    // que fallaron, en vez de perder la selección completa.
+                    await actualizarJugadoresDelPartido();
                 }
             });
         })

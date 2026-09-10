@@ -1,8 +1,10 @@
 <div id="modal-registro-informativo" class="modal" aria-modal="true" role="dialog">
     <div class="modal-content">
         <span class="close" aria-label="Cerrar modal">&times;</span>
-        <h2>Nuevo registro informativo</h2>
+        <h2 id="registro-modal-title">Nuevo registro informativo</h2>
         <form id="form-registro-informativo" novalidate>
+            <input type="hidden" id="registro-id">
+
             <label for="registro-titulo">Título:</label>
             <input type="text" id="registro-titulo" name="titulo" maxlength="150" required>
 

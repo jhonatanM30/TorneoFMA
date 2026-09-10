@@ -22,7 +22,7 @@
     <div class="main-content">
         <header class="banner">
             <h2>CONFIGURACIÓN</h2>
-            <p class="banner-subtitle">Publicaciones informativas para la página de Inicio</p>
+            <p class="banner-subtitle">Publicaciones informativas y galería de fotos para la página de Inicio</p>
             <p class="banner-date">Edición 2025 - Inicia el 26 de Diciembre</p>
         </header>
 
@@ -34,6 +34,23 @@
 
         <section class="registros-container">
             <div class="loading-state">Cargando registros informativos...</div>
+        </section>
+
+        <!-- Hallazgo post-despliegue (fase9): "Poder desde configuraciones
+             subir fotos y que aparezcan alli y se guarden donde estan las
+             actuales que se muestran y que sea en especie de carrusel". -->
+        <h3 class="section-title">Galería de Inicio</h3>
+
+        <div class="botones botones--galeria">
+            <label class="btn" for="galeria-input-imagen" data-requiere-dt="true">
+                <i class="fas fa-upload"></i> Subir foto
+            </label>
+            <input type="file" id="galeria-input-imagen" accept="image/jpeg,image/png,image/webp,image/gif" hidden data-requiere-dt="true">
+        </div>
+        <div id="galeria-form-status" class="form-status" aria-live="polite"></div>
+
+        <section class="galeria-config-container">
+            <div class="loading-state">Cargando galería...</div>
         </section>
     </div>
     <div id="modal-container"></div>

@@ -3,6 +3,7 @@ import { JugadorService } from "../services/JugadorService.js";
 import { PartidoService } from "../services/PartidoService.js";
 import { EstadisticaService } from "../services/EstadisticaService.js";
 import { RegistroInformativoService } from "../services/RegistroInformativoService.js";
+import { GaleriaService } from "../services/GaleriaService.js";
 
 // Colores fijos (no tomados de las variables CSS) porque Chart.js dibuja en
 // <canvas>: no hereda el tema por CSS, así que si el usuario cambia a modo
@@ -38,18 +39,18 @@ document.addEventListener("DOMContentLoaded", async function () {
     // index.html, antes que este módulo) ya esté disponible como global.
     if (typeof Chart === "undefined") {
         console.error("Chart.js no se cargó; se omiten los gráficos de Inicio.");
-        return;
-    }
+    } else {
+        if (jugadores.status === "fulfilled") {
+            graficarJugadoresPorPosicion(jugadores.value);
+        }
 
-    if (jugadores.status === "fulfilled") {
-        graficarJugadoresPorPosicion(jugadores.value);
-    }
-
-    if (equipos.status === "fulfilled" && jugadores.status === "fulfilled" && estadisticas.status === "fulfilled") {
-        graficarGolesPorEquipo(equipos.value, jugadores.value, estadisticas.value);
+        if (equipos.status === "fulfilled" && jugadores.status === "fulfilled" && estadisticas.status === "fulfilled") {
+            graficarGolesPorEquipo(equipos.value, jugadores.value, estadisticas.value);
+        }
     }
 
     await cargarNovedades();
+    await cargarGaleria();
 });
 
 // FRONTEND_VISION.md Fase5, hallazgo 2: registros informativos creados
@@ -105,6 +106,94 @@ function formatearFechaNovedad(fechaISO) {
     const fecha = new Date(fechaISO);
     if (Number.isNaN(fecha.getTime())) return "";
     return fecha.toLocaleString("es-CO", { dateStyle: "medium", timeStyle: "short" });
+}
+
+// Hallazgo post-despliegue (fase9): "Poder desde configuraciones subir
+// fotos y que aparezcan alli... y que sea en especie de carrusel algo
+// diferente a las card, mas dinamico". Reemplaza las 5 imágenes fijas que
+// antes estaban codificadas directamente en index.html por un carrusel
+// real armado con las fotos subidas desde Configuración
+// (GaleriaService), con avance automático y controles manuales.
+async function cargarGaleria() {
+    const contenedor = document.getElementById("carrusel-galeria");
+    if (!contenedor) return;
+
+    try {
+        const imagenes = await GaleriaService.obtenerGaleria();
+        renderCarrusel(contenedor, Array.isArray(imagenes) ? imagenes : []);
+    } catch (error) {
+        console.error("No se pudo cargar la galería del torneo:", error);
+        contenedor.innerHTML = `
+            <div class="empty-state">
+                No se pudo cargar la galería del torneo.
+            </div>
+        `;
+    }
+}
+
+function renderCarrusel(contenedor, imagenes) {
+    if (imagenes.length === 0) {
+        contenedor.innerHTML = `
+            <div class="empty-state">
+                Todavía no hay fotos en la galería. Se suben desde Configuración.
+            </div>
+        `;
+        return;
+    }
+
+    contenedor.innerHTML = `
+        <div class="carrusel-track">
+            ${imagenes.map((imagen, indice) => `
+                <img class="carrusel-slide${indice === 0 ? " carrusel-slide--activa" : ""}" src="${imagen.imagenUrl}" alt="Foto del torneo ${indice + 1}">
+            `).join("")}
+        </div>
+        ${imagenes.length > 1 ? `
+            <button type="button" class="carrusel-flecha carrusel-flecha--prev" aria-label="Foto anterior">&#10094;</button>
+            <button type="button" class="carrusel-flecha carrusel-flecha--next" aria-label="Foto siguiente">&#10095;</button>
+            <div class="carrusel-puntos">
+                ${imagenes.map((_, indice) => `<span class="carrusel-punto${indice === 0 ? " carrusel-punto--activo" : ""}" data-indice="${indice}"></span>`).join("")}
+            </div>
+        ` : ""}
+    `;
+
+    if (imagenes.length <= 1) {
+        return;
+    }
+
+    const slides = contenedor.querySelectorAll(".carrusel-slide");
+    const puntos = contenedor.querySelectorAll(".carrusel-punto");
+    let indiceActual = 0;
+    let temporizador = null;
+
+    const mostrarSlide = (indice) => {
+        indiceActual = (indice + slides.length) % slides.length;
+        slides.forEach((slide, i) => slide.classList.toggle("carrusel-slide--activa", i === indiceActual));
+        puntos.forEach((punto, i) => punto.classList.toggle("carrusel-punto--activo", i === indiceActual));
+    };
+
+    const reiniciarAutoavance = () => {
+        if (temporizador) clearInterval(temporizador);
+        temporizador = setInterval(() => mostrarSlide(indiceActual + 1), 5000);
+    };
+
+    contenedor.querySelector(".carrusel-flecha--prev")?.addEventListener("click", () => {
+        mostrarSlide(indiceActual - 1);
+        reiniciarAutoavance();
+    });
+
+    contenedor.querySelector(".carrusel-flecha--next")?.addEventListener("click", () => {
+        mostrarSlide(indiceActual + 1);
+        reiniciarAutoavance();
+    });
+
+    puntos.forEach((punto) => {
+        punto.addEventListener("click", () => {
+            mostrarSlide(Number(punto.dataset.indice));
+            reiniciarAutoavance();
+        });
+    });
+
+    reiniciarAutoavance();
 }
 
 function pintarContador(idElemento, resultado) {

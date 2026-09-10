@@ -1,8 +1,10 @@
 <div id="modal-estadistica" class="modal" aria-modal="true" role="dialog">
     <div class="modal-content">
         <span class="close" aria-label="Cerrar modal">&times;</span>
-        <h2>Registrar Estadística</h2>
+        <h2 id="estadistica-modal-title">Registrar Estadística</h2>
         <form id="form-estadistica" novalidate>
+            <input type="hidden" id="estadistica-id">
+
             <label for="estadistica-partido">Partido:</label>
             <select id="estadistica-partido" name="idPartido" required>
                 <option value="">Seleccione un partido</option>
@@ -12,6 +14,8 @@
             <select id="estadistica-jugador" name="idJugador" required disabled>
                 <option value="">Seleccione un partido primero</option>
             </select>
+
+            <div id="estadistica-existente-info" class="form-status info" hidden></div>
 
             <label for="estadistica-goles">Goles:</label>
             <input type="number" id="estadistica-goles" name="goles" min="0" step="1" value="0" required>

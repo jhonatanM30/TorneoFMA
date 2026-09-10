@@ -108,9 +108,22 @@ document.addEventListener("DOMContentLoaded", async function () {
             </table>
         `;
 
+        // Hallazgo post-despliegue (fase9): "se puede editar... un
+        // registro de estadistica". Abre el modal ya en modo edición con
+        // el registro completo (evita otra llamada al backend: ya está en
+        // estadisticasCache).
+        estadisticasContainer.querySelectorAll(".btn-editar").forEach((button) => {
+            button.addEventListener("click", () => {
+                const estadistica = estadisticas.find((item) => String(item.id) === String(button.dataset.id));
+                if (estadistica && window.abrirModalEstadistica) {
+                    window.abrirModalEstadistica(estadistica);
+                }
+            });
+        });
+
         estadisticasContainer.querySelectorAll(".btn-eliminar").forEach((button) => {
             button.addEventListener("click", async () => {
-                const confirmar = window.confirm("¿Estás seguro de eliminar esta estadística?");
+                const confirmar = window.confirm("¿Estás seguro de eliminar esta estadística? Los goles del partido se recalcularán.");
                 if (!confirmar) return;
 
                 try {
@@ -144,7 +157,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <td>${estadistica.tarjetasAmarillas ?? 0}</td>
                 <td>${estadistica.tarjetasRojas ?? 0}</td>
                 <td>${estadistica.asistencias ?? 0}</td>
-                <td><button class="btn btn-small btn-eliminar" data-requiere-dt="true" data-id="${estadistica.id}">Eliminar</button></td>
+                <td>
+                    <button class="btn btn-small btn-editar" data-requiere-dt="true" data-id="${estadistica.id}">Editar</button>
+                    <button class="btn btn-small btn-eliminar" data-requiere-dt="true" data-id="${estadistica.id}">Eliminar</button>
+                </td>
             </tr>
         `;
     }

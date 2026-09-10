@@ -127,6 +127,15 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
+        // Hallazgo post-despliegue (fase9): "se deberia permitir editar la
+        // alineacion un suplente pase a titular y viceversa" y "eliminar
+        // un jugador de la alineación si el partido no ha iniciado" - los
+        // botones de editar/quitar solo se muestran mientras el partido
+        // está PROGRAMADO (el backend también lo exige). Con el partido ya
+        // iniciado, los cambios de rol pasan por "Registrar cambio" más
+        // abajo (CambioJugadorService), que sí queda auditado con minuto.
+        const partidoProgramado = (partido.estado || "PROGRAMADO") === "PROGRAMADO";
+
         const idLocal = String(partido.equipoLocal?.id ?? "");
         const idVisitante = String(partido.equipoVisitante?.id ?? "");
 
@@ -136,12 +145,43 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
 
         resultado.innerHTML = `
-            ${tarjetaEquipo(partido.equipoLocal?.nombre || "Equipo local", deEquipo(idLocal))}
-            ${tarjetaEquipo(partido.equipoVisitante?.nombre || "Equipo visitante", deEquipo(idVisitante))}
+            ${tarjetaEquipo(partido.equipoLocal?.nombre || "Equipo local", deEquipo(idLocal), partido.id, partidoProgramado)}
+            ${tarjetaEquipo(partido.equipoVisitante?.nombre || "Equipo visitante", deEquipo(idVisitante), partido.id, partidoProgramado)}
         `;
+
+        if (partidoProgramado) {
+            resultado.querySelectorAll(".btn-alineacion-rol").forEach((button) => {
+                button.addEventListener("click", async () => {
+                    const idJugador = button.dataset.idJugador;
+                    const nuevoTitular = button.dataset.titular !== "true";
+                    try {
+                        await AlineacionService.actualizarAlineacion(partido.id, idJugador, nuevoTitular);
+                        mostrarToast("Alineación actualizada.", "success");
+                        await mostrarAlineacion(partido.id);
+                    } catch (error) {
+                        mostrarToast(error.message || "No se pudo actualizar la alineación", "error");
+                    }
+                });
+            });
+
+            resultado.querySelectorAll(".btn-alineacion-quitar").forEach((button) => {
+                button.addEventListener("click", async () => {
+                    const confirmar = window.confirm("¿Quitar a este jugador de la alineación?");
+                    if (!confirmar) return;
+
+                    try {
+                        await AlineacionService.eliminarAlineacion(partido.id, button.dataset.idJugador);
+                        mostrarToast("Jugador quitado de la alineación.", "success");
+                        await mostrarAlineacion(partido.id);
+                    } catch (error) {
+                        mostrarToast(error.message || "No se pudo quitar al jugador", "error");
+                    }
+                });
+            });
+        }
     }
 
-    function tarjetaEquipo(nombreEquipo, jugadoresAlineados) {
+    function tarjetaEquipo(nombreEquipo, jugadoresAlineados, idPartido, partidoProgramado) {
         const titulares = jugadoresAlineados.filter((item) => item.titular);
         const suplentes = jugadoresAlineados.filter((item) => !item.titular);
 
@@ -150,17 +190,17 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <h3>${nombreEquipo}</h3>
                 <h4>Titulares (${titulares.length}/11)</h4>
                 <ul class="alineacion-lista">
-                    ${listaJugadores(titulares)}
+                    ${listaJugadores(titulares, partidoProgramado)}
                 </ul>
                 <h4>Suplentes</h4>
                 <ul class="alineacion-lista">
-                    ${listaJugadores(suplentes)}
+                    ${listaJugadores(suplentes, partidoProgramado)}
                 </ul>
             </article>
         `;
     }
 
-    function listaJugadores(items) {
+    function listaJugadores(items, partidoProgramado) {
         if (items.length === 0) {
             return '<li class="sin-jugadores">Sin jugadores registrados</li>';
         }
@@ -169,7 +209,21 @@ document.addEventListener("DOMContentLoaded", async function () {
             const jugador = item.jugador || jugadoresCache.find((j) => String(j.id) === String(item.idJugador));
             const nombre = jugador?.nombre || `Jugador #${item.idJugador}`;
             const dorsal = jugador?.dorsal ?? "-";
-            return `<li>#${dorsal} — ${nombre}</li>`;
+            const idJugador = item.idJugador ?? jugador?.id;
+            const esTitular = Boolean(item.titular);
+
+            const acciones = partidoProgramado
+                ? `
+                    <span class="alineacion-acciones">
+                        <button class="btn btn-small btn-alineacion-rol" data-requiere-dt="true" data-id-jugador="${idJugador}" data-titular="${esTitular}">
+                            ${esTitular ? "Pasar a suplente" : "Pasar a titular"}
+                        </button>
+                        <button class="btn btn-small btn-alineacion-quitar" data-requiere-dt="true" data-id-jugador="${idJugador}">Quitar</button>
+                    </span>
+                `
+                : "";
+
+            return `<li>#${dorsal} — ${nombre}${acciones}</li>`;
         }).join("");
     }
 

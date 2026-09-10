@@ -193,3 +193,74 @@
     color: var(--color-text-muted);
     font-style: italic;
 }
+
+/* Hallazgo post-despliegue (fase9): botones "Pasar a titular/suplente" y
+   "Quitar" por jugador ya alineado (solo visibles con el partido
+   PROGRAMADO, ver alineaciones.js). Se muestran en su propia línea para
+   no descuadrar el ancho fijo de .alineacion-lista li en pantallas
+   angostas. */
+.alineacion-lista li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.alineacion-acciones {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+/* Hallazgo post-despliegue (fase9): "se deberia permitir alinear en
+   Lote". Checklist de jugadores disponibles dentro del modal de
+   alineación (components/modal-alineacion.html), en vez de un único
+   select + checkbox como antes. */
+.alineacion-lote-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding-right: 4px;
+    margin: 6px 0;
+}
+
+.alineacion-lote-fila {
+    display: grid !important;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border: 1px solid var(--color-input-border, #ddd);
+    border-radius: 8px;
+    font-weight: 400 !important;
+    font-size: 14px !important;
+    cursor: pointer;
+}
+
+.alineacion-lote-fila input[type="checkbox"] {
+    width: auto;
+}
+
+.alineacion-lote-nombre small {
+    color: var(--color-text-muted);
+    font-weight: 400;
+}
+
+.alineacion-lote-fila select {
+    width: auto;
+    padding: 6px 8px;
+    font-size: 13px;
+}
+
+@media (max-width: 500px) {
+    .alineacion-lote-fila {
+        grid-template-columns: auto 1fr;
+    }
+
+    .alineacion-lote-fila select {
+        grid-column: 1 / -1;
+    }
+}

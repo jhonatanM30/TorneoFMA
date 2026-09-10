@@ -1,4 +1,6 @@
 import { EquipoService } from "../services/EquipoService.js";
+import { JugadorService } from "../services/JugadorService.js";
+import { EstadisticaService } from "../services/EstadisticaService.js";
 import { mostrarToast } from "./toast.js";
 import { PartidoService } from "../services/PartidoService.js";
 import { inicializarModalPartido } from "./modalPartido.js";
@@ -6,6 +8,8 @@ import { inicializarModalSorteo } from "./modalSorteo.js";
 
 let partidosCache = [];
 let equiposCache = [];
+let jugadoresCache = [];
+let estadisticasCache = [];
 
 const ETIQUETAS_FASE = {
     FASE_DE_GRUPOS: "Fase de grupos",
@@ -39,11 +43,22 @@ document.addEventListener("DOMContentLoaded", async function () {
         return;
     }
 
+    // Hallazgo post-despliegue (fase9): jugadores y estadísticas se cargan
+    // acá también (no solo equipos) para poder armar, debajo de cada
+    // partido, un resumen de "novedades" (goles/tarjetas/asistencias por
+    // jugador) sin llamadas adicionales al backend - mismo patrón que ya
+    // usa alineaciones.js para su historial.
     try {
-        equiposCache = await EquipoService.obtenerEquipos();
+        [equiposCache, jugadoresCache, estadisticasCache] = await Promise.all([
+            EquipoService.obtenerEquipos(),
+            JugadorService.obtenerJugadores(),
+            EstadisticaService.obtenerEstadisticas()
+        ]);
     } catch (error) {
         equiposCache = [];
-        console.error("No se pudieron cargar los equipos para el formulario de partidos:", error);
+        jugadoresCache = [];
+        estadisticasCache = [];
+        console.error("No se pudieron cargar los datos para el formulario/resumen de partidos:", error);
     }
 
     inicializarModalPartido({
@@ -92,8 +107,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     async function cargarPartidos() {
         partidosContainer.innerHTML = "<div class='loading-state'>Cargando partidos...</div>";
         try {
-            const partidos = await PartidoService.obtenerPartidos();
+            const [partidos, estadisticas] = await Promise.all([
+                PartidoService.obtenerPartidos(),
+                EstadisticaService.obtenerEstadisticas()
+            ]);
             partidosCache = Array.isArray(partidos) ? partidos : [];
+            estadisticasCache = Array.isArray(estadisticas) ? estadisticas : estadisticasCache;
             render(aplicarFiltros(partidosCache));
         } catch (error) {
             partidosContainer.innerHTML = `
@@ -116,6 +135,45 @@ document.addEventListener("DOMContentLoaded", async function () {
                 </div>
             `;
         }
+    }
+
+    // Hallazgo post-despliegue (fase9): "el historial del partido que sale
+    // en alineaciones deberia mostrarse en el partido abajo cuando se
+    // registre la novedad, con gol amarilla o la novedad relacionada
+    // ejemplo yeiler 1gol, 1(imagen de tarjeta amarilla)". Como
+    // Estadistica ahora es un solo registro por jugador+partido (con
+    // contadores), este resumen es directo: una línea por jugador con
+    // registro en este partido.
+    function resumenNovedades(idPartido) {
+        const idPartidoStr = String(idPartido);
+        const registros = estadisticasCache.filter((estadistica) => String(estadistica.idPartido) === idPartidoStr);
+
+        if (registros.length === 0) {
+            return "";
+        }
+
+        const items = registros.map((estadistica) => {
+            const jugador = jugadoresCache.find((item) => String(item.id) === String(estadistica.idJugador));
+            const nombre = jugador?.nombre || `Jugador #${estadistica.idJugador}`;
+
+            const partes = [];
+            if (Number(estadistica.goles) > 0) partes.push(`${estadistica.goles} ⚽`);
+            if (Number(estadistica.asistencias) > 0) partes.push(`${estadistica.asistencias} 🅰️`);
+            if (Number(estadistica.tarjetasAmarillas) > 0) partes.push(`${estadistica.tarjetasAmarillas} 🟨`);
+            if (Number(estadistica.tarjetasRojas) > 0) partes.push(`${estadistica.tarjetasRojas} 🟥`);
+
+            if (partes.length === 0) {
+                return null;
+            }
+
+            return `<li><strong>${nombre}</strong>: ${partes.join(", ")}</li>`;
+        }).filter(Boolean);
+
+        if (items.length === 0) {
+            return "";
+        }
+
+        return `<ul class="partido-novedades">${items.join("")}</ul>`;
     }
 
     function render(partidos) {
@@ -152,6 +210,20 @@ document.addEventListener("DOMContentLoaded", async function () {
                     ? `<button class="btn btn-small btn-finalizar-partido" data-requiere-dt="true" data-id="${partido.id ?? ""}">Finalizar partido</button>`
                     : "";
 
+            // Hallazgo post-despliegue (fase9): "una vez finalizado el
+            // partido, no se puede editar ni eliminar" - además de que el
+            // backend ya lo rechaza, se ocultan directamente los botones
+            // para un partido FINALIZADO (mismo criterio que
+            // data-requiere-dt: evitar que se intente una acción que de
+            // todos modos va a fallar).
+            const puedeEditarseOEliminarse = estado !== "FINALIZADO";
+            const botonesEdicion = puedeEditarseOEliminarse
+                ? `
+                    <button class="btn btn-small btn-editar" data-requiere-dt="true" data-id="${partido.id ?? ""}">Editar</button>
+                    <button class="btn btn-small btn-eliminar" data-requiere-dt="true" data-id="${partido.id ?? ""}">Eliminar</button>
+                `
+                : "";
+
             return `
                 <article class="partido-card" data-id="${partido.id ?? ""}">
                     <div>
@@ -165,12 +237,12 @@ document.addEventListener("DOMContentLoaded", async function () {
                             <span class="badge-fase ${partido.fase || ""}">${faseEtiqueta}</span>
                             <span class="badge-estado badge-estado--${estado.toLowerCase()}">${estadoEtiqueta}</span>
                         </div>
+                        ${resumenNovedades(partido.id)}
                     </div>
                     <div class="partido-actions">
                         <a class="btn btn-small btn-alineacion" href="alineaciones.html?idPartido=${partido.id ?? ""}">Alineación</a>
                         ${botonEstado}
-                        <button class="btn btn-small btn-editar" data-requiere-dt="true" data-id="${partido.id ?? ""}">Editar</button>
-                        <button class="btn btn-small btn-eliminar" data-requiere-dt="true" data-id="${partido.id ?? ""}">Eliminar</button>
+                        ${botonesEdicion}
                     </div>
                 </article>
             `;
@@ -190,7 +262,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const partido = partidos.find((item) => String(item.id) === String(button.dataset.id));
                 if (!partido) return;
 
-                const confirmar = window.confirm("¿Estás seguro de eliminar este partido?");
+                const confirmar = window.confirm("¿Estás seguro de eliminar este partido? También se eliminarán sus alineaciones, cambios de jugador y estadísticas registradas.");
                 if (!confirmar) return;
 
                 try {

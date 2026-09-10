@@ -273,3 +273,24 @@ h2{
     text-align: center;
     margin-top: 4px;
 }
+
+/* Hallazgo post-despliegue (fase9): "el historial del partido... deberia
+   mostrarse en el partido abajo cuando se registre la novedad, con gol
+   amarilla o la novedad relacionada ejemplo yeiler 1gol, 1(tarjeta
+   amarilla)". Resumen compacto de goles/tarjetas/asistencias por jugador,
+   calculado en partidos.js a partir de Estadistica ya cargada. */
+.partido-novedades {
+    list-style: none;
+    margin: 8px 0 0;
+    padding: 8px 10px;
+    background: var(--color-help-bg, rgba(0, 0, 0, 0.04));
+    border-radius: 8px;
+    font-size: 13px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.partido-novedades li {
+    display: block;
+}

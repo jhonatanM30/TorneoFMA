@@ -222,3 +222,11 @@
 .btn-secundario:hover {
     background: var(--color-cancelar-bg-hover) !important;
 }
+
+/* Hallazgo post-despliegue (fase9): mensajes informativos (ni error ni
+   éxito) dentro de un modal - ej. "ya existe un registro, se va a
+   editar" o "marcador actual: X-Y, edítalo desde Estadísticas". */
+.form-status.info {
+    color: var(--color-text-muted);
+    font-style: italic;
+}

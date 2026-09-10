@@ -155,3 +155,99 @@
     margin: 0 auto;
     font-weight: 600;
 }
+
+/* Hallazgo post-despliegue (fase9): "Poder desde configuraciones subir
+   fotos... y que sea en especie de carrusel algo diferente a las card,
+   mas dinamico". Reemplaza la antigua ".main-image" (grilla estática de 5
+   <img> fijas) por un carrusel real: una sola foto visible a la vez, con
+   transición, flechas y puntos de navegación, armado en js/dashboard.js
+   a partir de las fotos que se suben desde Configuración. */
+.carrusel-galeria {
+    position: relative;
+    max-width: 900px;
+    width: 100%;
+    margin: 30px auto 25px;
+    padding: 0 20px;
+}
+
+.carrusel-track {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    background: var(--color-surface);
+}
+
+.carrusel-slide {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.6s ease-in-out;
+}
+
+.carrusel-slide--activa {
+    opacity: 1;
+}
+
+.carrusel-flecha {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.45);
+    color: #fff;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease-in-out;
+}
+
+.carrusel-flecha:hover {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.carrusel-flecha--prev {
+    left: 12px;
+}
+
+.carrusel-flecha--next {
+    right: 12px;
+}
+
+.carrusel-puntos {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.carrusel-punto {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--color-input-border, #ccc);
+    cursor: pointer;
+    transition: background 0.2s ease-in-out;
+}
+
+.carrusel-punto--activo {
+    background: var(--color-primary, #145A32);
+}
+
+@media (max-width: 600px) {
+    .carrusel-flecha {
+        width: 30px;
+        height: 30px;
+        font-size: 13px;
+    }
+}

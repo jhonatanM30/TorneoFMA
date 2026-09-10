@@ -1,10 +1,12 @@
 <div id="modal-alineacion" class="modal" aria-modal="true" role="dialog">
-    <div class="modal-content">
+    <div class="modal-content modal-content--ancho">
         <span class="close" aria-label="Cerrar modal">&times;</span>
-        <h2>Alinear jugador</h2>
+        <h2>Alinear jugadores</h2>
         <p class="modal-help">
-            El backend valida que el jugador no esté repetido en el mismo
-            partido y que un equipo no supere 11 titulares.
+            Marca uno o varios jugadores disponibles e indica si entran como
+            titulares o suplentes. Se registran todos de una vez (alineación
+            en lote); el backend valida que un equipo no supere 11 titulares
+            y que ningún jugador quede repetido.
         </p>
         <form id="form-alineacion" novalidate>
             <label for="alineacion-partido">Partido:</label>
@@ -12,22 +14,16 @@
                 <option value="">Seleccione un partido</option>
             </select>
 
-            <label for="alineacion-jugador">Jugador:</label>
-            <select id="alineacion-jugador" name="idJugador" required disabled>
-                <option value="">Seleccione un partido primero</option>
-            </select>
-
-            <label class="check-label">
-                <input type="checkbox" id="alineacion-titular" name="titular">
-                Titular (si no se marca, queda como suplente)
-            </label>
+            <div id="alineacion-lista-jugadores" class="alineacion-lote-lista">
+                <p class="empty-state">Seleccione un partido para ver los jugadores disponibles.</p>
+            </div>
 
             <div id="alineacion-form-status" class="form-status" aria-live="polite"></div>
 
             <div class="modal-buttons">
                 <button type="button" id="alineacion-cancelar-btn" class="btn-secundario">Cancelar</button>
                 <button id="alineacion-submit-btn" type="submit">
-                <span id="alineacion-submit-text">Guardar</span>
+                <span id="alineacion-submit-text">Guardar alineación</span>
             </button>
             </div>
         </form>

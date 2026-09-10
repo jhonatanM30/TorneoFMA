@@ -43,6 +43,18 @@ const etiquetaPartido = (partido) => {
 // jugadores que estén alineados en el partido"). Si el partido todavía no
 // tiene alineación cargada, el select queda vacío con un mensaje que
 // indica ir primero a la pantalla de Alineaciones.
+//
+// Hallazgo post-despliegue (fase9):
+// - El backend ahora exige que el partido esté EN_CURSO o FINALIZADO para
+//   registrar una estadística: si está PROGRAMADO, se avisa de una vez en
+//   vez de dejar elegir jugador para recién fallar al guardar.
+// - "una vez creado un registro de estadisticas para un jugador en un
+//   partido, las siguientes... se puede gestionar desde el mismo
+//   registro": al elegir un jugador ya con estadística registrada en ese
+//   partido, el modal detecta el registro existente (GET /buscar) y pasa
+//   solo a modo edición, en vez de dejar crear un duplicado. También se
+//   puede abrir directamente en modo edición desde la tabla (botón
+//   Editar), pasando el registro ya conocido.
 export function inicializarModalEstadistica({ partidos = [], jugadores = [], onEstadisticaGuardada = () => {} } = {}) {
     const modalContainer = document.getElementById("modal-container");
 
@@ -60,8 +72,11 @@ export function inicializarModalEstadistica({ partidos = [], jugadores = [], onE
             const btnCerrarModal = modal.querySelector(".close");
             const formEstadistica = modal.querySelector("#form-estadistica");
             const formStatus = modal.querySelector("#estadistica-form-status");
+            const existenteInfo = modal.querySelector("#estadistica-existente-info");
+            const modalTitle = modal.querySelector("#estadistica-modal-title");
             const submitButton = modal.querySelector("#estadistica-submit-btn");
             const submitText = modal.querySelector("#estadistica-submit-text");
+            const hiddenId = modal.querySelector("#estadistica-id");
             const selectPartido = modal.querySelector("#estadistica-partido");
             const selectJugador = modal.querySelector("#estadistica-jugador");
 
@@ -75,11 +90,46 @@ export function inicializarModalEstadistica({ partidos = [], jugadores = [], onE
                 formStatus.className = `form-status ${type}`;
             };
 
+            const setExistenteInfo = (message) => {
+                existenteInfo.hidden = !message;
+                existenteInfo.textContent = message || "";
+            };
+
             const setSavingState = (isSaving) => {
                 submitButton.disabled = isSaving;
                 submitButton.classList.toggle("is-loading", isSaving);
-                submitText.textContent = isSaving ? "Guardando..." : "Guardar";
+                submitText.textContent = isSaving ? "Guardando..." : (hiddenId.value ? "Actualizar" : "Guardar");
             };
+
+            const pasarAModoEdicion = (estadistica) => {
+                hiddenId.value = estadistica.id;
+                modalTitle.textContent = "Editar Estadística";
+                formEstadistica.querySelector("#estadistica-goles").value = estadistica.goles ?? 0;
+                formEstadistica.querySelector("#estadistica-amarillas").value = estadistica.tarjetasAmarillas ?? 0;
+                formEstadistica.querySelector("#estadistica-rojas").value = estadistica.tarjetasRojas ?? 0;
+                formEstadistica.querySelector("#estadistica-asistencias").value = estadistica.asistencias ?? 0;
+                formEstadistica.querySelector("#estadistica-minuto").value = estadistica.minuto ?? "";
+                setExistenteInfo("Ya existe un registro de este jugador en este partido: se va a editar en vez de crear uno nuevo.");
+                setSavingState(false);
+            };
+
+            const volverAModoCreacion = () => {
+                hiddenId.value = "";
+                modalTitle.textContent = "Registrar Estadística";
+                formEstadistica.querySelector("#estadistica-goles").value = 0;
+                formEstadistica.querySelector("#estadistica-amarillas").value = 0;
+                formEstadistica.querySelector("#estadistica-rojas").value = 0;
+                formEstadistica.querySelector("#estadistica-asistencias").value = 0;
+                formEstadistica.querySelector("#estadistica-minuto").value = "";
+                setExistenteInfo("");
+                setSavingState(false);
+            };
+
+            // true mientras el modal fue abierto directamente en modo
+            // edición (botón "Editar" de la tabla): en ese caso partido y
+            // jugador quedan fijos (no se pueden reasignar, el backend lo
+            // rechazaría) y no se vuelve a auto-detectar nada al cambiarlos.
+            let edicionDirecta = false;
 
             const actualizarJugadoresDelPartido = async () => {
                 const idPartido = selectPartido.value;
@@ -91,6 +141,16 @@ export function inicializarModalEstadistica({ partidos = [], jugadores = [], onE
                     return;
                 }
 
+                // Hallazgo post-despliegue (fase9): registrar solo se
+                // permite con el partido EN_CURSO o FINALIZADO.
+                if (partido.estado === "PROGRAMADO") {
+                    selectJugador.innerHTML = '<option value="">Este partido todavía no ha iniciado</option>';
+                    selectJugador.disabled = true;
+                    setStatus("Este partido todavía no ha iniciado: no se pueden registrar estadísticas hasta que arranque.", "info");
+                    return;
+                }
+
+                setStatus("");
                 selectJugador.innerHTML = '<option value="">Cargando jugadores alineados...</option>';
                 selectJugador.disabled = true;
 
@@ -112,21 +172,76 @@ export function inicializarModalEstadistica({ partidos = [], jugadores = [], onE
                     : '<option value="">Este partido todavía no tiene jugadores alineados (ver Alineaciones)</option>';
             };
 
-            selectPartido.addEventListener("change", actualizarJugadoresDelPartido);
+            selectPartido.addEventListener("change", () => {
+                if (edicionDirecta) return;
+                volverAModoCreacion();
+                actualizarJugadoresDelPartido();
+            });
+
+            selectJugador.addEventListener("change", async () => {
+                if (edicionDirecta) return;
+
+                const idPartido = selectPartido.value;
+                const idJugador = selectJugador.value;
+
+                if (!idPartido || !idJugador) {
+                    volverAModoCreacion();
+                    return;
+                }
+
+                try {
+                    const existente = await EstadisticaService.buscarExistente(idJugador, idPartido);
+                    if (existente) {
+                        pasarAModoEdicion(existente);
+                    } else {
+                        volverAModoCreacion();
+                    }
+                } catch (error) {
+                    console.error("No se pudo verificar si ya existe una estadística para este jugador y partido:", error);
+                    volverAModoCreacion();
+                }
+            });
 
             const closeModal = () => {
                 modal.style.display = "none";
                 formEstadistica.reset();
                 selectJugador.innerHTML = '<option value="">Seleccione un partido primero</option>';
-                selectJugador.disabled = true;
+                selectJugador.disabled = false;
+                selectPartido.disabled = false;
+                edicionDirecta = false;
+                volverAModoCreacion();
                 setStatus("");
             };
 
-            window.abrirModalEstadistica = () => {
+            // estadisticaExistente: si se pasa (desde el botón "Editar" de
+            // la tabla), el modal abre ya en modo edición con partido y
+            // jugador fijos.
+            window.abrirModalEstadistica = (estadisticaExistente = null) => {
                 formEstadistica.reset();
-                selectJugador.innerHTML = '<option value="">Seleccione un partido primero</option>';
-                selectJugador.disabled = true;
                 setStatus("");
+                selectPartido.disabled = false;
+                edicionDirecta = false;
+
+                if (!estadisticaExistente) {
+                    selectJugador.innerHTML = '<option value="">Seleccione un partido primero</option>';
+                    selectJugador.disabled = true;
+                    volverAModoCreacion();
+                    modal.style.display = "flex";
+                    return;
+                }
+
+                edicionDirecta = true;
+                const partido = partidos.find((item) => String(item.id) === String(estadisticaExistente.idPartido));
+                const jugador = jugadores.find((item) => String(item.id) === String(estadisticaExistente.idJugador));
+
+                selectPartido.value = String(estadisticaExistente.idPartido);
+                selectPartido.disabled = true;
+
+                selectJugador.innerHTML = `<option value="${estadisticaExistente.idJugador}">${jugador?.nombre || `Jugador #${estadisticaExistente.idJugador}`}</option>`;
+                selectJugador.value = String(estadisticaExistente.idJugador);
+                selectJugador.disabled = true;
+
+                pasarAModoEdicion(estadisticaExistente);
                 modal.style.display = "flex";
             };
 
@@ -165,16 +280,25 @@ export function inicializarModalEstadistica({ partidos = [], jugadores = [], onE
                 setStatus("");
 
                 try {
-                    const resultado = await EstadisticaService.crearEstadistica(payload);
+                    let resultado;
+                    let mensajeExito;
+
+                    if (hiddenId.value) {
+                        resultado = await EstadisticaService.editarEstadistica(hiddenId.value, payload);
+                        mensajeExito = "Estadística actualizada correctamente.";
+                    } else {
+                        resultado = await EstadisticaService.crearEstadistica(payload);
+                        mensajeExito = "Estadística registrada correctamente.";
+                    }
 
                     if (resultado) {
                         formEstadistica.reset();
                         closeModal();
-                        mostrarToast("Estadística registrada correctamente.", "success");
+                        mostrarToast(mensajeExito, "success");
                         await onEstadisticaGuardada();
                     }
                 } catch (error) {
-                    setStatus(error.message || "Ocurrió un error al registrar la estadística.", "error");
+                    setStatus(error.message || "Ocurrió un error al guardar la estadística.", "error");
                 } finally {
                     setSavingState(false);
                 }

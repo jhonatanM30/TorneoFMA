@@ -27,14 +27,6 @@ const validarPartido = (partido) => {
         errores.push("Debe indicar la hora del partido.");
     }
 
-    if (partido.golesLocal === null || partido.golesLocal === undefined || Number(partido.golesLocal) < 0) {
-        errores.push("Los goles del equipo local no pueden ser negativos.");
-    }
-
-    if (partido.golesVisitante === null || partido.golesVisitante === undefined || Number(partido.golesVisitante) < 0) {
-        errores.push("Los goles del equipo visitante no pueden ser negativos.");
-    }
-
     return errores;
 };
 
@@ -42,6 +34,17 @@ const validarPartido = (partido) => {
 // FRONTEND_VISION.md Fase3: "un partido se deberia permitir Editar" - ya
 // se agrego PUT /api/partidos en el backend, este modal ahora soporta
 // modo edicion igual que Equipo/Jugador (id oculto + abrirModalPartido(partido)).
+//
+// Hallazgo post-despliegue (fase9): "los goles que se reflejan en partido
+// deben ser ingresados por el registro de estadisticas... si se desea
+// editar se debe editar por la estadistica registrada en estadisticas".
+// Los campos de goles se quitaron del formulario (ver
+// components/modal-partido.html); este modal ya no los lee ni los envía.
+// "Una vez finalizado el partido, no se puede editar ni eliminar": como
+// defensa adicional a que partidos.js ya oculta el botón Editar para un
+// partido FINALIZADO, si igual se llega a abrir el modal para uno (por
+// ejemplo, con datos desactualizados en pantalla) se bloquea el envío acá
+// también, con el mismo mensaje que daría el backend.
 export function inicializarModalPartido({ equipos = [], onPartidoGuardado = () => {} } = {}) {
     const modalContainer = document.getElementById("modal-container");
 
@@ -59,6 +62,7 @@ export function inicializarModalPartido({ equipos = [], onPartidoGuardado = () =
             const btnCerrarModal = modal.querySelector(".close");
             const formPartido = modal.querySelector("#form-partido");
             const formStatus = modal.querySelector("#partido-form-status");
+            const golesInfo = modal.querySelector("#partido-goles-info");
             const modalTitle = modal.querySelector("#partido-modal-title");
             const submitButton = modal.querySelector("#partido-submit-btn");
             const submitText = modal.querySelector("#partido-submit-text");
@@ -66,6 +70,8 @@ export function inicializarModalPartido({ equipos = [], onPartidoGuardado = () =
             const selectLocal = modal.querySelector("#partido-local");
             const selectVisitante = modal.querySelector("#partido-visitante");
             const inputFecha = modal.querySelector("#partido-fecha");
+
+            let partidoFinalizado = false;
 
             // FRONTEND_API_PROMPT.md: "Fecha no puede ser anterior a hoy". El
             // atributo min bloquea el date picker; validarPartido() además
@@ -106,7 +112,7 @@ export function inicializarModalPartido({ equipos = [], onPartidoGuardado = () =
             };
 
             const setSavingState = (isSaving) => {
-                submitButton.disabled = isSaving;
+                submitButton.disabled = isSaving || partidoFinalizado;
                 submitButton.classList.toggle("is-loading", isSaving);
                 submitText.textContent = isSaving ? "Guardando..." : "Guardar";
             };
@@ -117,12 +123,16 @@ export function inicializarModalPartido({ equipos = [], onPartidoGuardado = () =
                 hiddenId.value = "";
                 modalTitle.textContent = "Programar Partido";
                 submitText.textContent = "Guardar";
+                golesInfo.hidden = true;
+                partidoFinalizado = false;
                 refrescarOpciones();
                 setStatus("");
             };
 
             window.abrirModalPartido = (partido = null) => {
                 formPartido.reset();
+                golesInfo.hidden = true;
+                partidoFinalizado = false;
 
                 if (!partido) {
                     hiddenId.value = "";
@@ -136,13 +146,25 @@ export function inicializarModalPartido({ equipos = [], onPartidoGuardado = () =
                     selectVisitante.value = partido.idEquipoVisitante ?? partido.equipoVisitante?.id ?? "";
                     formPartido.querySelector("#partido-fecha").value = partido.fecha || "";
                     formPartido.querySelector("#partido-hora").value = partido.hora || "";
-                    formPartido.querySelector("#partido-goles-local").value = partido.golesLocal ?? 0;
-                    formPartido.querySelector("#partido-goles-visitante").value = partido.golesVisitante ?? 0;
                     formPartido.querySelector("#partido-fase").value = partido.fase || "";
+
+                    const golesLocal = Number(partido.golesLocal ?? 0);
+                    const golesVisitante = Number(partido.golesVisitante ?? 0);
+                    golesInfo.hidden = false;
+                    golesInfo.textContent = `Marcador actual: ${golesLocal} - ${golesVisitante}. `
+                        + "Se calcula solo con lo registrado en Estadísticas; para corregirlo, edita ahí el registro del jugador correspondiente.";
+
+                    partidoFinalizado = partido.estado === "FINALIZADO";
+                    if (partidoFinalizado) {
+                        setStatus("Este partido ya finalizó: no se puede editar.", "error");
+                    }
                 }
 
                 refrescarOpciones();
-                setStatus("");
+                if (!partidoFinalizado) {
+                    setStatus("");
+                }
+                setSavingState(false);
                 modal.style.display = "flex";
             };
 
@@ -159,14 +181,17 @@ export function inicializarModalPartido({ equipos = [], onPartidoGuardado = () =
             formPartido.addEventListener("submit", async (event) => {
                 event.preventDefault();
 
+                if (partidoFinalizado) {
+                    setStatus("Este partido ya finalizó: no se puede editar.", "error");
+                    return;
+                }
+
                 const payload = {
                     id: hiddenId.value ? Number(hiddenId.value) : undefined,
                     idEquipoLocal: selectLocal.value ? Number(selectLocal.value) : null,
                     idEquipoVisitante: selectVisitante.value ? Number(selectVisitante.value) : null,
                     fecha: formPartido.querySelector("#partido-fecha").value,
                     hora: formPartido.querySelector("#partido-hora").value,
-                    golesLocal: Number(formPartido.querySelector("#partido-goles-local").value),
-                    golesVisitante: Number(formPartido.querySelector("#partido-goles-visitante").value),
                     fase: formPartido.querySelector("#partido-fase").value
                 };
 
