@@ -29,11 +29,39 @@
         <!-- FRONTEND_VISION.md Fase6: "Deberia permitir crear y eliminar
              especies de blog para la pagina de inicio". -->
         <div class="botones">
-            <button class="btn" id="btn-agregar-registro" data-requiere-dt="true">Nuevo registro informativo</button>
+            <button class="btn" id="btn-agregar-registro" data-requiere-admin="true">Nuevo registro informativo</button>
         </div>
 
         <section class="registros-container">
             <div class="loading-state">Cargando registros informativos...</div>
+        </section>
+
+        <!-- Usuarios (solo ADMIN): crear DT o administrador y asignar equipo. -->
+        <div id="usuarios-seccion" data-solo-admin>
+            <h3 class="section-title">Usuarios</h3>
+
+            <form id="form-usuario" class="usuario-form" novalidate>
+                <input type="text" name="username" placeholder="Usuario (3 a 50 caracteres)" maxlength="50" autocomplete="off" required aria-label="Usuario">
+                <input type="password" name="password" placeholder="Contraseña (8 a 72 caracteres)" maxlength="72" autocomplete="new-password" required aria-label="Contraseña">
+                <select id="usuario-rol" aria-label="Rol">
+                    <option value="DT">Director Técnico</option>
+                    <option value="ADMIN">Administrador</option>
+                </select>
+                <select id="usuario-equipo" aria-label="Equipo del DT"><option value="">Sin equipo</option></select>
+                <button class="btn btn-small" type="submit">Crear usuario</button>
+            </form>
+            <div id="usuario-form-status" class="form-status" aria-live="polite"></div>
+
+            <section id="usuarios-lista" class="registros-container"></section>
+        </div>
+
+        <!-- Traspasos: bandeja de solicitudes pendientes para el organizador.
+             Confirmar mueve al jugador y rechaza las demás solicitudes
+             pendientes de ese mismo jugador. -->
+        <h3 class="section-title">Solicitudes de traspaso pendientes</h3>
+
+        <section class="traspasos-container">
+            <div class="loading-state">Cargando solicitudes de traspaso...</div>
         </section>
 
         <!-- Hallazgo post-despliegue (fase9): "Poder desde configuraciones
@@ -42,10 +70,10 @@
         <h3 class="section-title">Galería de Inicio</h3>
 
         <div class="botones botones--galeria">
-            <label class="btn" for="galeria-input-imagen" data-requiere-dt="true">
+            <label class="btn" for="galeria-input-imagen" data-requiere-admin="true">
                 <i class="fas fa-upload"></i> Subir foto
             </label>
-            <input type="file" id="galeria-input-imagen" accept="image/jpeg,image/png,image/webp,image/gif" hidden data-requiere-dt="true">
+            <input type="file" id="galeria-input-imagen" accept="image/jpeg,image/png,image/webp,image/gif" hidden data-requiere-admin="true">
         </div>
         <div id="galeria-form-status" class="form-status" aria-live="polite"></div>
 

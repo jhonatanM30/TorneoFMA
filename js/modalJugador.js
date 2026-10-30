@@ -26,6 +26,12 @@ const validarJugador = (jugador) => {
         errores.push("Debe seleccionar un equipo.");
     }
 
+    if (jugador.costo !== undefined && (!Number.isFinite(jugador.costo) || jugador.costo < 0)) {
+        errores.push("El costo no puede ser negativo.");
+    } else if (jugador.costo !== undefined && Math.round(jugador.costo * 100) / 100 !== jugador.costo) {
+        errores.push("El costo admite máximo 2 decimales.");
+    }
+
     return errores;
 };
 
@@ -93,6 +99,7 @@ export function inicializarModalJugador({ equipos = [], onJugadorGuardado = () =
                     formJugador.querySelector("#jugador-posicion").value = jugador.posicion || "";
                     formJugador.querySelector("#jugador-edad").value = jugador.edad ?? "";
                     formJugador.querySelector("#jugador-dorsal").value = jugador.dorsal ?? "";
+                    formJugador.querySelector("#jugador-costo").value = jugador.costo ?? "";
                     selectEquipo.value = jugador.idEquipo || (jugador.equipo ? jugador.equipo.id : "") || "";
                 }
 
@@ -121,6 +128,13 @@ export function inicializarModalJugador({ equipos = [], onJugadorGuardado = () =
                     dorsal: Number(formJugador.querySelector("#jugador-dorsal").value),
                     idEquipo: selectEquipo.value ? Number(selectEquipo.value) : null
                 };
+
+                // Costo opcional: vacío = no se envía (el backend deja 0 al
+                // crear y conserva el actual al editar).
+                const costoTexto = formJugador.querySelector("#jugador-costo").value.trim();
+                if (costoTexto !== "") {
+                    payload.costo = Number(costoTexto);
+                }
 
                 const errores = validarJugador(payload);
                 if (errores.length > 0) {

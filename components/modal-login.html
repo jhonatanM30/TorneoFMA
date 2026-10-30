@@ -1,0 +1,27 @@
+<div id="modal-login" class="modal" aria-modal="true" role="dialog" aria-labelledby="login-titulo">
+    <div class="modal-content">
+        <span class="close" aria-label="Cerrar modal">&times;</span>
+        <h2 id="login-titulo">Iniciar sesión</h2>
+        <form id="form-login" novalidate>
+            <label for="login-usuario">Usuario:</label>
+            <input type="text" id="login-usuario" name="username" autocomplete="username" maxlength="50" required>
+
+            <label for="login-clave">Contraseña:</label>
+            <input type="password" id="login-clave" name="password" autocomplete="current-password" maxlength="72" required>
+
+            <p class="modal-help">
+                Sin sesión puedes consultar el torneo. Para crear o editar información necesitas una
+                cuenta de administrador; los directores técnicos pueden solicitar traspasos hacia su equipo.
+            </p>
+
+            <div id="login-form-status" class="form-status" aria-live="polite"></div>
+
+            <div class="modal-buttons">
+                <button type="button" id="login-cancelar-btn" class="btn-secundario">Cancelar</button>
+                <button id="login-submit-btn" type="submit">
+                    <span id="login-submit-text">Entrar</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

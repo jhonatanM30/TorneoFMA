@@ -131,8 +131,8 @@ function renderEquipos(equiposContainer, equipos) {
                 <p><strong>Clasificación:</strong> ${tipo}</p>
                 <div class="equipo-actions">
                     <button class="btn btn-small btn-detalle" data-id="${equipo.id ?? ""}">Detalle</button>
-                    <button class="btn btn-small btn-editar" data-requiere-dt="true" data-id="${equipo.id ?? ""}">Editar</button>
-                    <button class="btn btn-small btn-eliminar" data-requiere-dt="true" data-id="${equipo.id ?? ""}">Eliminar</button>
+                    <button class="btn btn-small btn-editar" data-requiere-admin="true" data-id="${equipo.id ?? ""}">Editar</button>
+                    <button class="btn btn-small btn-eliminar" data-requiere-admin="true" data-id="${equipo.id ?? ""}">Eliminar</button>
                 </div>
             </article>
         `;

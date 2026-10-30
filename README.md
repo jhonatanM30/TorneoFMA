@@ -167,11 +167,13 @@ hallazgo por hallazgo, en
 - **Fase 6 (Configuración):** página nueva para crear y eliminar
   registros informativos (tipo blog) que alimentan la sección de
   Novedades de Inicio.
-- **Fase 7 (rol Director Técnico):** al cargar cualquier página se
-  pregunta una sola vez por sesión de navegador si quien la usa es
-  Director Técnico; sin la clave correcta, el backend rechaza cualquier
-  acción de escritura (crear/editar/eliminar) con un mensaje claro. El
-  botón "Rol" del menú permite volver a indicar la clave sin recargar.
+- **Login y roles (reemplaza a la Fase 7):** el backend ya no usa la
+  clave fija `X-Director-Tecnico-Key`. Hay login real (`POST /api/auth/login`)
+  con roles `ADMIN` y `DT`; el token Bearer (3 min) se respalda en `sessionStorage`
+  (`js/auth.js`, se pierde al cerrar la pestaña), se renueva mientras haya actividad del usuario y la
+  sesión se cierra sola al vencer. Visitante: solo consulta. `DT`: solicita
+  traspasos hacia su equipo. `ADMIN`: todo, incluida la gestión de usuarios
+  (Configuración). La sesión se mantiene al cambiar de página.
 
 ## Cómo ejecutarlo
 
@@ -190,13 +192,9 @@ hallazgo por hallazgo, en
    `http://localhost:57075` (por ejemplo, si lo levantaste con
    `docker compose` en otro puerto vía `SERVER_PORT`).
 4. Abre `http://127.0.0.1:5500/index.html` (o el puerto que uses).
-5. Al cargar la primera página del sitio, el navegador va a preguntar
-   (Fase 7) si quien lo usa es Director Técnico. Si vas a crear, editar
-   o eliminar información, ingresa la clave configurada en el backend
-   (`app.director-tecnico.clave` / variable de entorno
-   `APP_DIRECTOR_TECNICO_CLAVE`; en desarrollo local por defecto es
-   `director2025`). Si solo vas a consultar, deja el campo vacío — vas a
-   poder ver todo igual, solo que cualquier acción de escritura va a
-   responder "no autorizado". Podés volver a indicar el rol en cualquier
-   momento con el botón "Rol" del menú lateral, sin recargar la página.
+5. Para crear, editar o eliminar información, usa el botón "Iniciar
+   sesión" (arriba a la derecha) con las credenciales del administrador
+   (`APP_SECURITY_ADMIN_USERNAME` / `APP_SECURITY_ADMIN_PASSWORD` del
+   `.env` del backend). Las cuentas de DT las crea el administrador desde
+   Configuración → Usuarios. Sin sesión puedes consultar todo.
 

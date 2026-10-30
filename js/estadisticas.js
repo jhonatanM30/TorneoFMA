@@ -158,8 +158,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <td>${estadistica.tarjetasRojas ?? 0}</td>
                 <td>${estadistica.asistencias ?? 0}</td>
                 <td>
-                    <button class="btn btn-small btn-editar" data-requiere-dt="true" data-id="${estadistica.id}">Editar</button>
-                    <button class="btn btn-small btn-eliminar" data-requiere-dt="true" data-id="${estadistica.id}">Eliminar</button>
+                    <button class="btn btn-small btn-editar" data-requiere-admin="true" data-id="${estadistica.id}">Editar</button>
+                    <button class="btn btn-small btn-eliminar" data-requiere-admin="true" data-id="${estadistica.id}">Eliminar</button>
                 </td>
             </tr>
         `;

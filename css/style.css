@@ -210,6 +210,21 @@ html, body {
     transition: all 0.3s ease-in-out;
 }
 
+/* Aviso para un DT sin equipo asignado (js/app.js). */
+.aviso-sesion {
+    max-width: 700px;
+    margin: 20px auto 0;
+    padding: 10px 16px;
+    border-left: 4px solid var(--color-accent);
+    background: rgba(255, 200, 0, 0.12);
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.aviso-sesion[hidden] {
+    display: none;
+}
+
 .btn-rol-flotante:hover {
     box-shadow: 0px 6px 14px rgba(0, 0, 0, 0.8);
 }

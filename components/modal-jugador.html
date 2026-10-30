@@ -23,6 +23,10 @@
             <label for="jugador-dorsal">Número de dorsal:</label>
             <input type="number" id="jugador-dorsal" name="dorsal" min="1" step="1" required>
 
+            <label for="jugador-costo">Costo (opcional):</label>
+            <input type="number" id="jugador-costo" name="costo" min="0" step="0.01" placeholder="0.00">
+            <p class="modal-help">Valor del jugador para los traspasos. Si lo dejas vacío, al crear queda en 0 y al editar se conserva el actual.</p>
+
             <label for="jugador-equipo">Equipo:</label>
             <select id="jugador-equipo" name="idEquipo" required>
                 <option value="">Seleccione un equipo</option>

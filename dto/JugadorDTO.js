@@ -15,7 +15,8 @@ export class JugadorDTO {
         dorsal = null,
         idEquipo = null,
         equipo = null,
-        imagenUrl = null
+        imagenUrl = null,
+        costo = null
     } = {}) {
         this.id = id;
         this.nombre = nombre;
@@ -28,5 +29,8 @@ export class JugadorDTO {
         // que EquipoDTO.imagenUrl (se sube aparte via
         // JugadorService.subirImagenJugador, ver js/modalJugador.js).
         this.imagenUrl = imagenUrl;
+        // Costo del jugador (decimal >= 0, 2 decimales, sin divisa). Opcional
+        // al crear/editar: sin valor el backend deja 0 / conserva el actual.
+        this.costo = costo;
     }
 }

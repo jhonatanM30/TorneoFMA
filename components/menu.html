@@ -19,14 +19,9 @@
 <!-- Botón de menú hamburguesa -->
 <button class="menu-btn" onclick="toggleMenu()">☰</button>
 
-<!-- Hallazgo (post-despliegue): el ingreso como Director Tecnico solo se
-     podia volver a indicar abriendo el menu lateral colapsable (en movil
-     hacia falta el boton hamburguesa primero), y la unica otra via era el
-     prompt automatico de una sola vez al cargar la pagina (js/config.js).
-     Este boton vive fuera del menu, siempre visible en cualquier pagina y
-     en cualquier momento ("a un costado", opuesto al boton hamburguesa),
-     y refleja con su color/icono el rol activo (ver inicializarBotonRol
-     en js/app.js). -->
-<button id="btn-rol-flotante" class="btn-rol-flotante" type="button" aria-label="Indicar si eres Director Técnico">
-    <i class="fas fa-user-shield"></i> <span id="btn-rol-flotante-texto">Espectador</span>
+<!-- Acceso a la sesión: botón fijo, visible en cualquier página. Abre el
+     login (visitante) o permite cerrar sesión; refleja usuario y rol activos
+     (ver inicializarBotonRol en js/app.js). -->
+<button id="btn-rol-flotante" class="btn-rol-flotante" type="button" aria-label="Iniciar o cerrar sesión">
+    <i class="fas fa-user-shield"></i> <span id="btn-rol-flotante-texto">Iniciar sesión</span>
 </button>

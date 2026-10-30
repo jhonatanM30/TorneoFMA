@@ -215,10 +215,10 @@ document.addEventListener("DOMContentLoaded", async function () {
             const acciones = partidoProgramado
                 ? `
                     <span class="alineacion-acciones">
-                        <button class="btn btn-small btn-alineacion-rol" data-requiere-dt="true" data-id-jugador="${idJugador}" data-titular="${esTitular}">
+                        <button class="btn btn-small btn-alineacion-rol" data-requiere-admin="true" data-id-jugador="${idJugador}" data-titular="${esTitular}">
                             ${esTitular ? "Pasar a suplente" : "Pasar a titular"}
                         </button>
-                        <button class="btn btn-small btn-alineacion-quitar" data-requiere-dt="true" data-id-jugador="${idJugador}">Quitar</button>
+                        <button class="btn btn-small btn-alineacion-quitar" data-requiere-admin="true" data-id-jugador="${idJugador}">Quitar</button>
                     </span>
                 `
                 : "";

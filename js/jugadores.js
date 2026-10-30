@@ -3,6 +3,9 @@ import { mostrarToast } from "./toast.js";
 import { JugadorService } from "../services/JugadorService.js";
 import { inicializarModalJugador } from "./modalJugador.js";
 import { inicializarModalJugadorLote } from "./modalJugadorLote.js";
+import { inicializarModalTraspaso } from "./modalTraspaso.js";
+import { inicializarModalHistorialJugador } from "./modalHistorialJugador.js";
+import { formatearCosto } from "./formatos.js";
 
 let jugadoresCache = [];
 let equiposCache = [];
@@ -77,6 +80,13 @@ document.addEventListener("DOMContentLoaded", async function () {
         equipos: equiposCache,
         onJugadorGuardado: refrescar
     });
+
+    inicializarModalTraspaso({
+        equipos: equiposCache,
+        onTraspasoSolicitado: refrescar
+    });
+
+    inicializarModalHistorialJugador();
 
     inicializarModalJugadorLote({
         equipos: equiposCache,
@@ -157,9 +167,12 @@ function renderJugadores(container, jugadores, onCambio) {
                 <h3>${jugador.nombre || "Jugador sin nombre"}</h3>
                 <p><strong>Equipo:</strong> <span class="punto-equipo" style="background-color: ${colorEquipo};"></span>${nombreEquipo}</p>
                 <p><strong>Edad:</strong> ${jugador.edad ?? "-"}</p>
+                <p><strong>Costo:</strong> ${formatearCosto(jugador.costo)}</p>
                 <div class="jugador-actions">
-                    <button class="btn btn-small btn-editar" data-requiere-dt="true" data-id="${jugador.id ?? ""}">Editar</button>
-                    <button class="btn btn-small btn-eliminar" data-requiere-dt="true" data-id="${jugador.id ?? ""}">Eliminar</button>
+                    <button class="btn btn-small btn-editar" data-requiere-admin="true" data-id="${jugador.id ?? ""}">Editar</button>
+                    <button class="btn btn-small btn-traspaso" data-requiere-traspaso="true" data-id="${jugador.id ?? ""}">Solicitar traspaso</button>
+                    <button class="btn btn-small btn-historial" data-id="${jugador.id ?? ""}">Historial</button>
+                    <button class="btn btn-small btn-eliminar" data-requiere-admin="true" data-id="${jugador.id ?? ""}">Eliminar</button>
                 </div>
             </article>
         `;
@@ -170,6 +183,24 @@ function renderJugadores(container, jugadores, onCambio) {
             const jugador = jugadores.find((item) => String(item.id) === String(button.dataset.id));
             if (jugador && window.abrirModalJugador) {
                 window.abrirModalJugador(jugador);
+            }
+        });
+    });
+
+    container.querySelectorAll(".btn-traspaso").forEach((button) => {
+        button.addEventListener("click", () => {
+            const jugador = jugadores.find((item) => String(item.id) === String(button.dataset.id));
+            if (jugador && window.abrirModalTraspaso) {
+                window.abrirModalTraspaso(jugador);
+            }
+        });
+    });
+
+    container.querySelectorAll(".btn-historial").forEach((button) => {
+        button.addEventListener("click", () => {
+            const jugador = jugadores.find((item) => String(item.id) === String(button.dataset.id));
+            if (jugador && window.abrirModalHistorialJugador) {
+                window.abrirModalHistorialJugador(jugador);
             }
         });
     });

@@ -1,0 +1,35 @@
+<div id="modal-traspaso" class="modal" aria-modal="true" role="dialog">
+    <div class="modal-content">
+        <span class="close" aria-label="Cerrar modal">&times;</span>
+        <h2>Solicitar traspaso</h2>
+        <form id="form-traspaso" novalidate>
+            <p><strong>Jugador:</strong> <span id="traspaso-jugador"></span></p>
+            <p><strong>Equipo actual:</strong> <span id="traspaso-equipo-origen"></span></p>
+
+            <label for="traspaso-equipo-destino">Equipo destino:</label>
+            <select id="traspaso-equipo-destino" required>
+                <option value="">Seleccione un equipo</option>
+            </select>
+
+            <p><strong>Costo que se registrará:</strong> <span id="traspaso-costo" class="traspaso-costo"></span></p>
+
+            <label for="traspaso-dorsal">Dorsal nuevo (opcional):</label>
+            <input type="number" id="traspaso-dorsal" min="1" step="1" placeholder="Mantener el actual">
+            <p class="modal-help">
+                El costo es el del jugador al momento de solicitar y no cambia si luego se edita.
+                El jugador solo cambia de equipo cuando un organizador confirma la solicitud;
+                puede haber varias solicitudes pendientes del mismo jugador. No hay presupuesto
+                por equipo: el pago es solo el monto registrado.
+            </p>
+
+            <div id="traspaso-form-status" class="form-status" aria-live="polite"></div>
+
+            <div class="modal-buttons">
+                <button type="button" id="traspaso-cancelar-btn" class="btn-secundario">Cancelar</button>
+                <button id="traspaso-submit-btn" type="submit">
+                    <span id="traspaso-submit-text">Solicitar</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

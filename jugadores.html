@@ -27,9 +27,15 @@
         </header>
 
         <div class="botones">
-            <button class="btn" id="btn-agregar-jugador" data-requiere-dt="true">Agregar jugador</button>
-            <button class="btn" id="btn-agregar-lote" data-requiere-dt="true">Cargar varios jugadores</button>
+            <button class="btn" id="btn-agregar-jugador" data-requiere-admin="true">Agregar jugador</button>
+            <button class="btn" id="btn-agregar-lote" data-requiere-admin="true">Cargar varios jugadores</button>
         </div>
+
+        <!-- Visible solo para un DT sin equipo asignado (ver js/app.js). -->
+        <p class="aviso-sesion" data-aviso-dt-sin-equipo hidden>
+            Aún no tienes un equipo asignado, por eso no puedes solicitar traspasos.
+            Pídele a la organización que te asigne uno.
+        </p>
 
         <div class="jugadores-toolbar">
             <input id="buscar-jugador" type="search" placeholder="Buscar jugador por nombre" aria-label="Buscar jugador por nombre">
@@ -51,6 +57,8 @@
     </div>
     <div id="modal-container"></div>
     <div id="modal-lote-container"></div>
+    <div id="modal-traspaso-container"></div>
+    <div id="modal-historial-container"></div>
     <!-- Contenedor del footer -->
     <div id="footer-container"></div>
 </body>

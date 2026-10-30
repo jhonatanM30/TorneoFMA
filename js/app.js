@@ -8,9 +8,13 @@ document.addEventListener("DOMContentLoaded", function() {
     loadComponent("components/menu.html", "menu-container", function () {
         marcarPaginaActiva();
         inicializarInterruptorTema();
-        inicializarBotonRol();
+        inicializarSesion();
     });
     loadComponent("components/footer.html", "footer-container");
+
+    const contenedorLogin = document.createElement("div");
+    contenedorLogin.id = "login-container";
+    document.body.appendChild(contenedorLogin);
 });
 
 function aplicarTemaGuardado() {
@@ -60,139 +64,193 @@ function inicializarInterruptorTema() {
     });
 }
 
-// FRONTEND_VISION.md Fase7 + hallazgo post-despliegue (segunda ronda): botón
-// para (re)indicar el rol de Director Técnico. El prompt en sí vive en
-// js/config.js (window.MQA_preguntarRolDirectorTecnico) porque ese archivo
-// es el dueño de window.APP_CONFIG; acá se refleja el estado actual en el
-// botón y se decide CUÁNDO permitir volver a pedir la clave.
+// Sesión y roles (add-authentication-roles.md). El estado vive en js/auth.js
+// (módulo, token en memoria); acá solo se refleja en la interfaz: botón
+// flotante, modal de login y visibilidad de las acciones según el rol. El
+// backend es la autoridad; esto es solo comodidad.
 //
-// Antes este botón vivía DENTRO del menú lateral colapsable (había que
-// abrir el menú, en móvil, para encontrarlo) y competía por espacio con
-// el interruptor de modo oscuro. Ahora es un botón flotante fuera del
-// menú (components/menu.html, clase .btn-rol-flotante), visible en toda
-// página y en todo momento sin depender de abrir el menú ni de recargar;
-// además cambia de color/ícono según el rol activo, para que el estado
-// sea evidente de un vistazo (no solo el texto).
-//
-// Hallazgo (segunda ronda): tocar este botón mientras ya se era Director
-// Técnico volvía a preguntar la clave sin más aviso; si se escribía mal
-// (o se cancelaba el prompt sin querer), la app quedaba con una clave
-// inválida y ningún guardado volvía a funcionar, sin que nada lo
-// explicara ("parece que la app no sirve"). Ahora, mientras ya se es
-// Director Técnico, el botón NO vuelve a preguntar la clave directamente:
-// primero avisa y pide confirmar el cierre de sesión (se vuelve a modo
-// Espectador), y recién desde ahí se puede indicar una clave nueva. El
-// otro caso que podía "verse roto" -que la clave guardada deje de ser
-// válida sin que el usuario haga nada- se resuelve aparte, de forma
-// reactiva, en js/apiErrors.js (ante un 401 del backend).
+// Atributos que marcan los controles en cada pantalla:
+//   data-requiere-admin      -> solo ADMIN (crear, editar, borrar, confirmar...)
+//   data-requiere-traspaso   -> ADMIN, o DT con equipo asignado
+//   data-solo-admin          -> bloques que solo ve el ADMIN (p. ej. usuarios)
+//   data-aviso-dt-sin-equipo -> aviso visible solo para un DT sin equipo
+const ETIQUETAS_ROL = { ADMIN: "Administrador", DT: "Director Técnico" };
+
+let Auth = null;
+
+async function inicializarSesion() {
+    ({ Auth } = await import("./auth.js"));
+    const { mostrarToast } = await import("./toast.js");
+
+    window.MQA_abrirLogin = (mensaje) => abrirLogin(mensaje);
+
+    Auth.alCambiar((evento) => {
+        actualizarInterfazSesion();
+        if (evento.tipo === "expirada" || evento.tipo === "no-autorizado") {
+            mostrarToast(evento.mensaje, "error");
+            abrirLogin(evento.mensaje);
+        }
+    });
+
+    loadComponent("components/modal-login.html", "login-container", inicializarModalLogin);
+    inicializarBotonRol();
+}
+
 function inicializarBotonRol() {
     const boton = document.getElementById("btn-rol-flotante");
-    const texto = document.getElementById("btn-rol-flotante-texto");
     if (!boton) return;
 
-    const actualizarEstado = () => {
-        const esDirectorTecnico = Boolean(window.APP_CONFIG?.DIRECTOR_TECNICO_KEY);
-        if (texto) {
-            texto.textContent = esDirectorTecnico ? "Director Técnico" : "Espectador";
-        }
-        boton.classList.toggle("es-director-tecnico", esDirectorTecnico);
-        boton.querySelector("i").className = esDirectorTecnico ? "fas fa-user-check" : "fas fa-user-shield";
-        boton.title = esDirectorTecnico
-            ? "Estás como Director Técnico. Click para cerrar sesión y volver a Espectador."
-            : "Estás en modo Espectador (solo lectura). Click para ingresar como Director Técnico.";
-        actualizarVisibilidadConfiguracion(esDirectorTecnico);
-        actualizarVisibilidadAccionesDirectorTecnico();
-    };
+    actualizarInterfazSesion();
 
-    // Expuesta para que js/config.js (cierre reactivo de sesión ante un
-    // 401 del backend) pueda refrescar este botón y la visibilidad de
-    // Configuración sin recargar la página.
-    window.MQA_actualizarBotonRol = actualizarEstado;
+    // Muchos controles se generan después de cargar los datos de cada
+    // pantalla; el observador reaplica la visibilidad cuando aparece
+    // contenido nuevo.
+    new MutationObserver(aplicarVisibilidadPorRol)
+        .observe(document.body, { childList: true, subtree: true });
 
-    actualizarEstado();
-
-    // Hallazgo post-despliegue (tercera ronda): antes, un Hincha podía
-    // llenar por completo un formulario de creación/edición y recién al
-    // guardar se enteraba (por el 401 reactivo de js/apiErrors.js) de que
-    // no tenía permiso -mejor evitar que llegue a esa situación. Los
-    // botones/formularios que disparan una escritura (crear, editar,
-    // eliminar, sortear, iniciar/finalizar partido, registrar cambio,
-    // etc.) se marcan en cada pantalla con el atributo data-requiere-dt, y
-    // actualizarVisibilidadAccionesDirectorTecnico() los oculta o muestra
-    // según el rol activo. El problema es que la mayoría de esos
-    // elementos NO existen todavía en este punto -se generan recién
-    // cuando cada pantalla termina de cargar sus datos, en su propio
-    // script (equipos.js, jugadores.js, etc.), después de que este script
-    // ya corrió una vez-. Un MutationObserver reaplica el mismo criterio
-    // cada vez que aparece contenido nuevo en la página, para que ninguna
-    // pantalla tenga que acordarse de llamarlo a mano.
-    const observadorContenidoNuevo = new MutationObserver(() => {
-        actualizarVisibilidadAccionesDirectorTecnico();
-    });
-    observadorContenidoNuevo.observe(document.body, { childList: true, subtree: true });
-
-    boton.addEventListener("click", async () => {
-        const esDirectorTecnico = Boolean(window.APP_CONFIG?.DIRECTOR_TECNICO_KEY);
-
-        if (esDirectorTecnico) {
-            const confirmarCierre = window.confirm(
-                "Ya estás identificado como Director Técnico.\n\n" +
-                "Para cambiar la clave primero hay que cerrar esta sesión (vas a quedar en modo " +
-                "Espectador, solo lectura, hasta que ingreses una clave de nuevo).\n\n" +
-                "¿Cerrar sesión de Director Técnico ahora?"
-            );
-            if (confirmarCierre && typeof window.MQA_cerrarSesionDirectorTecnico === "function") {
-                window.MQA_cerrarSesionDirectorTecnico();
-            }
-            // MQA_cerrarSesionDirectorTecnico ya llama a window.MQA_actualizarBotonRol
-            // (definido arriba); si se canceló el confirm, no hay nada que actualizar.
+    boton.addEventListener("click", () => {
+        if (!Auth.haySesion()) {
+            abrirLogin();
             return;
         }
 
-        // MQA_preguntarRolDirectorTecnico (js/config.js) ahora es
-        // asíncrona: valida la clave contra el backend antes de
-        // aceptarla (hallazgo post-despliegue, tercera ronda), así que
-        // hay que esperar su resultado antes de refrescar el botón -si
-        // no, el botón podría llegar a mostrar "Director Técnico" un
-        // instante antes de saber si la clave era correcta.
-        if (typeof window.MQA_preguntarRolDirectorTecnico === "function") {
-            await window.MQA_preguntarRolDirectorTecnico();
+        const usuario = Auth.obtenerUsuario();
+        const equipo = usuario.teamName ? `\nEquipo: ${usuario.teamName}` : "";
+        const confirmarCierre = window.confirm(
+            `Sesión iniciada como ${usuario.username} (${ETIQUETAS_ROL[usuario.role] || usuario.role}).${equipo}\n\n¿Cerrar sesión?`
+        );
+        if (confirmarCierre) {
+            Auth.cerrarSesion();
         }
-        actualizarEstado();
     });
 }
 
-// Oculta/muestra el enlace a Configuración del menú lateral según el rol
-// activo (hallazgo post-despliegue: esa pantalla permite definir la clave
-// de Director Técnico del próximo período, entre otras acciones de
-// escritura -no tiene sentido mostrarsela a un Hincha que solo puede
-// consultar). Se llama cada vez que cambia el rol (login, logout manual o
-// reactivo ante un 401), no solo al cargar la página.
-function actualizarVisibilidadConfiguracion(esDirectorTecnico) {
+function actualizarInterfazSesion() {
+    const boton = document.getElementById("btn-rol-flotante");
+    const texto = document.getElementById("btn-rol-flotante-texto");
+    const usuario = Auth.obtenerUsuario();
+
+    if (boton) {
+        if (texto) {
+            const rol = usuario?.role === "ADMIN" ? "Admin" : `DT${usuario?.teamName ? ` ${usuario.teamName}` : ""}`;
+            texto.textContent = usuario ? `${usuario.username} · ${rol}` : "Iniciar sesión";
+        }
+        boton.classList.toggle("es-director-tecnico", Boolean(usuario));
+        boton.querySelector("i").className = usuario ? "fas fa-user-check" : "fas fa-right-to-bracket";
+        boton.title = usuario
+            ? `${ETIQUETAS_ROL[usuario.role] || usuario.role}${usuario.teamName ? ` de ${usuario.teamName}` : ""}. Click para cerrar sesión.`
+            : "Estás como visitante (solo consulta). Click para iniciar sesión.";
+    }
+
+    aplicarVisibilidadPorRol();
+}
+
+function aplicarVisibilidadPorRol() {
+    if (!Auth) return;
+    const esAdmin = Auth.esAdmin();
+    const puedeTraspaso = Auth.puedeSolicitarTraspaso();
+    const dtSinEquipo = Auth.dtSinEquipo();
+
+    document.querySelectorAll("[data-requiere-admin], [data-solo-admin]").forEach((el) => {
+        el.style.display = esAdmin ? "" : "none";
+    });
+    document.querySelectorAll("[data-requiere-traspaso]").forEach((el) => {
+        el.style.display = puedeTraspaso ? "" : "none";
+    });
+    document.querySelectorAll("[data-aviso-dt-sin-equipo]").forEach((el) => {
+        el.hidden = !dtSinEquipo;
+    });
+
+    // Configuración (registros, galería, bandeja de traspasos, usuarios) es
+    // solo para el administrador.
     const enlace = document.querySelector('#sidebar a[data-page="configuracion"]');
-    if (!enlace) return;
-    const item = enlace.closest("li") || enlace;
-    item.style.display = esDirectorTecnico ? "" : "none";
+    if (enlace) {
+        (enlace.closest("li") || enlace).style.display = esAdmin ? "" : "none";
+    }
 }
 
-// Función para cargar un componente HTML en un contenedor. callback (opcional)
-// se ejecuta una vez insertado el HTML, útil para inicializar cosas dentro
-// del componente recién cargado (por ejemplo, resaltar el enlace activo).
-// Oculta/muestra cualquier control que dispare una escritura al backend
-// (crear, editar, eliminar, sortear, iniciar/finalizar partido, registrar
-// cambio, etc.) según el rol activo. Cada pantalla solo tiene que marcar
-// el control con el atributo data-requiere-dt="true" -sea un botón fijo
-// en el HTML (por ejemplo "Agregar equipo") o uno generado dinámicamente
-// en su propio JS (por ejemplo "Editar"/"Eliminar" de cada fila)-, sin
-// tener que reimplementar acá la lógica de mostrar/ocultar. Se llama al
-// cargar la página, cada vez que cambia el rol (login, logout manual o
-// reactivo ante un 401) y cada vez que aparece contenido nuevo en la
-// página (ver el MutationObserver en inicializarBotonRol).
-function actualizarVisibilidadAccionesDirectorTecnico() {
-    const esDirectorTecnico = Boolean(window.APP_CONFIG?.DIRECTOR_TECNICO_KEY);
-    document.querySelectorAll("[data-requiere-dt]").forEach((elemento) => {
-        elemento.style.display = esDirectorTecnico ? "" : "none";
+let modalLogin = null;
+let mensajePendienteLogin = "";
+
+function abrirLogin(mensaje) {
+    if (!modalLogin) {
+        // El componente todavía se está cargando.
+        mensajePendienteLogin = mensaje || "";
+        return;
+    }
+    modalLogin.mostrar(mensaje);
+}
+
+function inicializarModalLogin() {
+    const modal = document.getElementById("modal-login");
+    const form = document.getElementById("form-login");
+    const estado = document.getElementById("login-form-status");
+    const inputUsuario = document.getElementById("login-usuario");
+    const inputClave = document.getElementById("login-clave");
+    const submit = document.getElementById("login-submit-btn");
+    const submitTexto = document.getElementById("login-submit-text");
+    if (!modal || !form) return;
+
+    modal.style.display = "none";
+
+    const setEstado = (mensaje, tipo = "info") => {
+        estado.textContent = mensaje || "";
+        estado.className = `form-status ${tipo}`;
+    };
+
+    const cerrar = () => {
+        modal.style.display = "none";
+        form.reset();
+        setEstado("");
+    };
+
+    modalLogin = {
+        mostrar(mensaje) {
+            form.reset();
+            setEstado(mensaje || "", mensaje ? "error" : "info");
+            modal.style.display = "flex";
+            inputUsuario.focus();
+        }
+    };
+
+    modal.querySelector(".close").addEventListener("click", cerrar);
+    document.getElementById("login-cancelar-btn").addEventListener("click", cerrar);
+    window.addEventListener("click", (evento) => {
+        if (evento.target === modal) cerrar();
     });
+
+    form.addEventListener("submit", async (evento) => {
+        evento.preventDefault();
+
+        const username = inputUsuario.value.trim();
+        const password = inputClave.value;
+        if (!username || !password) {
+            setEstado("Ingresa tu usuario y tu contraseña.", "error");
+            return;
+        }
+
+        submit.disabled = true;
+        submitTexto.textContent = "Entrando...";
+        setEstado("");
+        try {
+            await Auth.iniciarSesion(username, password);
+            cerrar();
+        } catch (error) {
+            // Mensaje del servidor (401 sin redirigir) o de conexión.
+            const sinConexion = error instanceof TypeError;
+            setEstado(sinConexion ? "No hay conexión con el servidor. Intenta de nuevo." : error.message, "error");
+            inputClave.value = "";
+            inputClave.focus();
+        } finally {
+            submit.disabled = false;
+            submitTexto.textContent = "Entrar";
+        }
+    });
+
+    if (mensajePendienteLogin) {
+        modalLogin.mostrar(mensajePendienteLogin);
+        mensajePendienteLogin = "";
+    }
 }
 
 function loadComponent(url, containerId, callback) {

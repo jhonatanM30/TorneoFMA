@@ -1,3 +1,5 @@
+import { Auth } from "./auth.js";
+
 // Utilidad compartida para interpretar los errores que devuelve el backend.
 //
 // El backend (GlobalExceptionHandler) no siempre responde con la misma
@@ -6,8 +8,8 @@
 //         { "indicadorRespuesta": "Error", "mensaje": "..." }
 //   - NotFoundException (equipo no encontrado) -> EquipoDTO parcial:
 //         { "indicadorRespuesta": "Sin Registros", "mensaje": "..." }
-//   - JugadorNotFoundException ->
-//         { "error": "..." }
+//   - 404 de recurso inexistente -> { "error": "..." }
+//   - 401 / 403 -> { "indicadorRespuesta": "No autorizado" | "Prohibido", "mensaje": "..." }
 //   - Validaciones @Valid fallidas (MethodArgumentNotValidException) ->
 //         mapa campo -> mensaje, por ejemplo:
 //         { "nombre": "El nombre del jugador es obligatorio." }
@@ -43,24 +45,17 @@ export function extraerMensajeError(payload, fallback = "Ocurrió un error. Por 
 }
 
 // Headers comunes para todas las llamadas al backend. Centralizado acá (en
-// vez de repetido en cada Service) para que agregar autenticación en el
-// futuro sea un cambio en un solo lugar: ver AUTH_TOKEN en js/config.js.
+// vez de repetido en cada Service): agrega Authorization: Bearer <token>
+// cuando hay sesión (js/auth.js). Las consultas pueden ir con o sin token.
 export function construirHeaders() {
     const headers = {
         "Content-Type": "application/json",
         Accept: "application/json"
     };
 
-    if (window.APP_CONFIG?.AUTH_TOKEN) {
-        headers.Authorization = `Bearer ${window.APP_CONFIG.AUTH_TOKEN}`;
-    }
-
-    // FRONTEND_VISION.md Fase7: el backend (DirectorTecnicoInterceptor)
-    // exige este header en todo método que no sea de consulta (POST/PUT/
-    // DELETE). Se agrega igual que AUTH_TOKEN, en un solo lugar, para que
-    // ningún Service tenga que ocuparse de esto.
-    if (window.APP_CONFIG?.DIRECTOR_TECNICO_KEY) {
-        headers["X-Director-Tecnico-Key"] = window.APP_CONFIG.DIRECTOR_TECNICO_KEY;
+    const token = Auth.obtenerToken();
+    if (token) {
+        headers.Authorization = `Bearer ${token}`;
     }
 
     return headers;
@@ -69,18 +64,13 @@ export function construirHeaders() {
 // Variante para subir archivos (multipart/form-data): el navegador debe
 // fijar el Content-Type con el boundary automáticamente, así que acá NO
 // se agrega (a diferencia de construirHeaders()). Usada por la subida del
-// escudo del equipo (FRONTEND_VISION.md Fase1).
+// escudo del equipo y de las fotos de la galería.
 export function construirHeadersMultipart() {
     const headers = { Accept: "application/json" };
 
-    if (window.APP_CONFIG?.AUTH_TOKEN) {
-        headers.Authorization = `Bearer ${window.APP_CONFIG.AUTH_TOKEN}`;
-    }
-
-    // Ver comentario equivalente en construirHeaders(): la subida del
-    // escudo del equipo (POST) también es un método de escritura.
-    if (window.APP_CONFIG?.DIRECTOR_TECNICO_KEY) {
-        headers["X-Director-Tecnico-Key"] = window.APP_CONFIG.DIRECTOR_TECNICO_KEY;
+    const token = Auth.obtenerToken();
+    if (token) {
+        headers.Authorization = `Bearer ${token}`;
     }
 
     return headers;
@@ -103,27 +93,13 @@ export async function parsearRespuesta(response, etiquetaAccion) {
     }
 
     if (!response.ok) {
-        // Hallazgo post-despliegue (segunda ronda): un 401 acá solo puede
-        // significar que la clave de Director Técnico guardada
-        // (X-Director-Tecnico-Key, ver construirHeaders() más arriba) ya
-        // no es válida -el backend no tiene ningún otro login que
-        // devuelva 401, porque AUTH_TOKEN siempre es null (ver
-        // js/config.js). Antes, en ese caso, la app seguía mandando esa
-        // misma clave inválida en cada intento siguiente sin avisar nada
-        // y sin volver nunca a modo Espectador, así que se veía como si
-        // "no sirviera" en vez de como un problema de clave. Ahora, apenas
-        // se detecta, se cierra acá mismo la sesión de Director Técnico
-        // (vuelve a Espectador, ver js/config.js) y el mensaje se lo dice
-        // explícitamente al usuario, que puede volver a ingresar la clave
-        // correcta con el botón de Rol (js/app.js).
-        if (response.status === 401 && window.APP_CONFIG?.DIRECTOR_TECNICO_KEY) {
-            if (typeof window.MQA_cerrarSesionDirectorTecnico === "function") {
-                window.MQA_cerrarSesionDirectorTecnico();
-            }
-            throw new Error(
-                "La clave de Director Técnico ya no es válida. Volviste a modo Espectador (solo lectura); " +
-                "usa el botón de Rol para ingresar la clave correcta."
-            );
+        // 401: falta, venció o es inválido el token. Se cierra la sesión local
+        // y se lleva al login con el mensaje del propio servidor.
+        // 403: sesión válida pero el rol no alcanza; no se cierra la sesión,
+        // el mensaje del servidor sube tal cual (ver más abajo).
+        if (response.status === 401) {
+            const mensajeServidor = payload ? extraerMensajeError(payload, "") : "";
+            throw new Error(Auth.manejarNoAutorizado(mensajeServidor));
         }
 
         const mensaje = payload

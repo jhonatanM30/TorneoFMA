@@ -205,22 +205,22 @@ document.addEventListener("DOMContentLoaded", async function () {
             const estado = partido.estado || "PROGRAMADO";
             const estadoEtiqueta = ETIQUETAS_ESTADO[estado] || estado;
             const botonEstado = estado === "PROGRAMADO"
-                ? `<button class="btn btn-small btn-iniciar-partido" data-requiere-dt="true" data-id="${partido.id ?? ""}">Iniciar partido</button>`
+                ? `<button class="btn btn-small btn-iniciar-partido" data-requiere-admin="true" data-id="${partido.id ?? ""}">Iniciar partido</button>`
                 : estado === "EN_CURSO"
-                    ? `<button class="btn btn-small btn-finalizar-partido" data-requiere-dt="true" data-id="${partido.id ?? ""}">Finalizar partido</button>`
+                    ? `<button class="btn btn-small btn-finalizar-partido" data-requiere-admin="true" data-id="${partido.id ?? ""}">Finalizar partido</button>`
                     : "";
 
             // Hallazgo post-despliegue (fase9): "una vez finalizado el
             // partido, no se puede editar ni eliminar" - además de que el
             // backend ya lo rechaza, se ocultan directamente los botones
             // para un partido FINALIZADO (mismo criterio que
-            // data-requiere-dt: evitar que se intente una acción que de
+            // data-requiere-admin: evitar que se intente una acción que de
             // todos modos va a fallar).
             const puedeEditarseOEliminarse = estado !== "FINALIZADO";
             const botonesEdicion = puedeEditarseOEliminarse
                 ? `
-                    <button class="btn btn-small btn-editar" data-requiere-dt="true" data-id="${partido.id ?? ""}">Editar</button>
-                    <button class="btn btn-small btn-eliminar" data-requiere-dt="true" data-id="${partido.id ?? ""}">Eliminar</button>
+                    <button class="btn btn-small btn-editar" data-requiere-admin="true" data-id="${partido.id ?? ""}">Editar</button>
+                    <button class="btn btn-small btn-eliminar" data-requiere-admin="true" data-id="${partido.id ?? ""}">Eliminar</button>
                 `
                 : "";
 

@@ -144,3 +144,59 @@
 .galeria-config-item .btn {
     width: 100%;
 }
+
+/* Traspasos: bandeja de solicitudes pendientes (reusa .registro-card). */
+.traspasos-container {
+    max-width: 900px;
+    width: 100%;
+    margin: 10px auto 25px;
+    padding: 0 20px;
+}
+
+.btn-confirmar {
+    background-color: var(--color-success, #27ae60);
+    color: #fff;
+}
+
+.traspaso-ruta {
+    margin: 4px 0 8px;
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+/* Usuarios (solo ADMIN) */
+.usuario-form {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.usuario-form input,
+.usuario-form select,
+.usuario-equipo select {
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid #bbb;
+    font-size: 14px;
+}
+
+.usuario-rol {
+    font-size: 12px;
+    font-weight: bold;
+    padding: 3px 10px;
+    border-radius: 12px;
+    background: var(--color-accent);
+    color: #101010;
+}
+
+.usuario-equipo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+}

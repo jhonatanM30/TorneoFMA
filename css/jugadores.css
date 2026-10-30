@@ -287,3 +287,31 @@ h2{
         width: 90%;
     }
 }
+
+/* ===== Traspasos ===== */
+.btn-traspaso {
+    background-color: var(--color-primary);
+    color: #fff;
+}
+
+.btn-historial {
+    background-color: var(--color-info);
+    color: #fff;
+}
+
+.traspaso-costo {
+    font-weight: 700;
+}
+
+.tabla-traspasos {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.tabla-traspasos th,
+.tabla-traspasos td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid rgba(128, 128, 128, 0.3);
+}

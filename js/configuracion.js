@@ -2,6 +2,8 @@ import { RegistroInformativoService } from "../services/RegistroInformativoServi
 import { GaleriaService } from "../services/GaleriaService.js";
 import { mostrarToast } from "./toast.js";
 import { inicializarModalRegistroInformativo } from "./modalRegistroInformativo.js";
+import { inicializarBandejaTraspasos } from "./bandejaTraspasos.js";
+import { inicializarUsuarios } from "./usuarios.js";
 
 document.addEventListener("DOMContentLoaded", async function () {
     const registrosContainer = document.querySelector(".registros-container");
@@ -92,8 +94,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <div class="registro-card-header">
                     <h3>${registro.titulo}</h3>
                     <span class="registro-card-acciones">
-                        <button class="btn btn-small btn-editar" data-requiere-dt="true" data-id="${registro.id}">Editar</button>
-                        <button class="btn btn-small btn-eliminar" data-requiere-dt="true" data-id="${registro.id}">Eliminar</button>
+                        <button class="btn btn-small btn-editar" data-requiere-admin="true" data-id="${registro.id}">Editar</button>
+                        <button class="btn btn-small btn-eliminar" data-requiere-admin="true" data-id="${registro.id}">Eliminar</button>
                     </span>
                 </div>
                 <p class="registro-fecha">${formatearFecha(registro.fechaPublicacion)}</p>
@@ -103,6 +105,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     await cargarRegistros();
+    inicializarUsuarios();
+    await inicializarBandejaTraspasos();
     await inicializarGaleria();
 });
 
@@ -156,7 +160,7 @@ async function inicializarGaleria() {
                 ${imagenes.map((imagen) => `
                     <figure class="galeria-config-item">
                         <img src="${imagen.imagenUrl}" alt="Foto de la galería">
-                        <button class="btn btn-small btn-eliminar" data-requiere-dt="true" data-id="${imagen.id}">Eliminar</button>
+                        <button class="btn btn-small btn-eliminar" data-requiere-admin="true" data-id="${imagen.id}">Eliminar</button>
                     </figure>
                 `).join("")}
             </div>
