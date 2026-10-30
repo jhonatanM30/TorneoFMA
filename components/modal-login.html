@@ -1,18 +1,30 @@
 <div id="modal-login" class="modal" aria-modal="true" role="dialog" aria-labelledby="login-titulo">
-    <div class="modal-content">
+    <div class="modal-content modal-login">
         <span class="close" aria-label="Cerrar modal">&times;</span>
+
+        <div class="login-icono" aria-hidden="true"><i class="fas fa-user-lock"></i></div>
         <h2 id="login-titulo">Iniciar sesión</h2>
+        <p class="login-subtitulo">Accede para gestionar el torneo</p>
+
         <form id="form-login" novalidate>
-            <label for="login-usuario">Usuario:</label>
-            <input type="text" id="login-usuario" name="username" autocomplete="username" maxlength="50" required>
+            <div class="login-campo">
+                <label for="login-usuario">Usuario</label>
+                <div class="login-input">
+                    <i class="fas fa-user" aria-hidden="true"></i>
+                    <input type="text" id="login-usuario" name="username" autocomplete="username" maxlength="50" placeholder="Tu usuario" required>
+                </div>
+            </div>
 
-            <label for="login-clave">Contraseña:</label>
-            <input type="password" id="login-clave" name="password" autocomplete="current-password" maxlength="72" required>
-
-            <p class="modal-help">
-                Sin sesión puedes consultar el torneo. Para crear o editar información necesitas una
-                cuenta de administrador; los directores técnicos pueden solicitar traspasos hacia su equipo.
-            </p>
+            <div class="login-campo">
+                <label for="login-clave">Contraseña</label>
+                <div class="login-input">
+                    <i class="fas fa-lock" aria-hidden="true"></i>
+                    <input type="password" id="login-clave" name="password" autocomplete="current-password" maxlength="72" placeholder="Tu contraseña" required>
+                    <button type="button" id="login-ver-clave" class="login-ver" aria-label="Mostrar contraseña" title="Mostrar contraseña">
+                        <i class="fas fa-eye" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </div>
 
             <div id="login-form-status" class="form-status" aria-live="polite"></div>
 
@@ -22,6 +34,11 @@
                     <span id="login-submit-text">Entrar</span>
                 </button>
             </div>
+
+            <p class="login-nota">
+                Sin sesión puedes consultar el torneo. Los directores técnicos pueden solicitar
+                traspasos hacia su equipo; el resto de acciones es solo del administrador.
+            </p>
         </form>
     </div>
 </div>

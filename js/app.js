@@ -201,17 +201,33 @@ function inicializarModalLogin() {
     const cerrar = () => {
         modal.style.display = "none";
         form.reset();
+        reiniciarVisibilidadClave();
         setEstado("");
     };
 
     modalLogin = {
         mostrar(mensaje) {
             form.reset();
+            reiniciarVisibilidadClave();
             setEstado(mensaje || "", mensaje ? "error" : "info");
             modal.style.display = "flex";
             inputUsuario.focus();
         }
     };
+
+    const botonVer = document.getElementById("login-ver-clave");
+    const reiniciarVisibilidadClave = () => {
+        inputClave.type = "password";
+        botonVer.querySelector("i").className = "fas fa-eye";
+        botonVer.title = botonVer.ariaLabel = "Mostrar contraseña";
+    };
+    botonVer.addEventListener("click", () => {
+        const mostrar = inputClave.type === "password";
+        inputClave.type = mostrar ? "text" : "password";
+        botonVer.querySelector("i").className = mostrar ? "fas fa-eye-slash" : "fas fa-eye";
+        botonVer.title = botonVer.ariaLabel = mostrar ? "Ocultar contraseña" : "Mostrar contraseña";
+        inputClave.focus();
+    });
 
     modal.querySelector(".close").addEventListener("click", cerrar);
     document.getElementById("login-cancelar-btn").addEventListener("click", cerrar);
