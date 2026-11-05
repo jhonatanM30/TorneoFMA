@@ -6,6 +6,8 @@ import { escaparHtml, formatearFechaHora } from "./formatos.js";
 import { inicializarModalTorneo } from "./modalTorneo.js";
 import { inicializarModalPartido } from "./modalPartido.js";
 import { renderSeccionLiga, agruparPorJornada, htmlEncabezadoJornada } from "./torneoLiga.js";
+import { renderSeccionEliminatoria } from "./torneoEliminatoria.js";
+import { abrirFormularioPenales, necesitaPenales } from "./penales.js";
 import {
     ETIQUETAS_FORMATO,
     ETIQUETAS_ESTADO_TORNEO,
@@ -20,6 +22,8 @@ import {
 
 let equiposCache = [];
 let torneoActualId = null;
+// Partidos de las llaves (protegidos): no se eliminan ni cambian de equipos.
+let partidosProtegidos = new Set();
 
 document.addEventListener("DOMContentLoaded", async function () {
     const vistaLista = document.getElementById("vista-lista");
@@ -135,6 +139,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     async function renderDetalle(torneo, equipos, partidos) {
+        partidosProtegidos = new Set();
         const historico = esHistorico(torneo);
         const borrador = torneo.status === "DRAFT";
         const enCurso = torneo.status === "IN_PROGRESS";
@@ -210,8 +215,15 @@ document.addEventListener("DOMContentLoaded", async function () {
         // Sección propia del formato. Se rellena al final para que un fallo
         // de la tabla no deje sin pintar el resto del detalle.
         const seccionFormato = document.getElementById("torneo-seccion-formato");
+        const recargar = () => abrirDetalle(torneo.id);
         if (torneo.format === "LEAGUE") {
-            await renderSeccionLiga(seccionFormato, torneo, partidos, () => abrirDetalle(torneo.id));
+            await renderSeccionLiga(seccionFormato, torneo, partidos, recargar);
+        } else if (torneo.format === "KNOCKOUT" || torneo.format === "GROUPS_KNOCKOUT") {
+            partidosProtegidos = await renderSeccionEliminatoria(seccionFormato, torneo, equipos, partidos, recargar);
+            // Los partidos de las llaves no se eliminan.
+            document.querySelectorAll(".btn-eliminar-partido").forEach((boton) => {
+                if (partidosProtegidos.has(boton.dataset.id)) boton.remove();
+            });
         }
     }
 
@@ -255,6 +267,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 </div>
                 <div class="partido-actions">
                     <a class="btn btn-small btn-alineacion" href="partidos.html">Ir a Partidos</a>
+                    ${necesitaPenales(partido) ? `<button class="btn btn-small btn-penales" data-requiere-admin="true" data-id="${partido.id}">Registrar penales</button>` : ""}
                     ${editable ? `
                         <button class="btn btn-small btn-editar-partido" data-requiere-admin="true" data-id="${partido.id}">Editar</button>
                         <button class="btn btn-small btn-eliminar btn-eliminar-partido" data-requiere-admin="true" data-id="${partido.id}">Eliminar</button>` : ""}
@@ -337,7 +350,16 @@ document.addEventListener("DOMContentLoaded", async function () {
         document.querySelectorAll(".btn-editar-partido").forEach((boton) => {
             boton.addEventListener("click", () => {
                 const partido = partidos.find((p) => String(p.id) === boton.dataset.id);
-                if (partido) window.abrirModalPartido?.(partido);
+                if (partido) {
+                    window.abrirModalPartido?.(partido, { equiposBloqueados: partidosProtegidos.has(String(partido.id)) });
+                }
+            });
+        });
+
+        document.querySelectorAll(".btn-penales").forEach((boton) => {
+            boton.addEventListener("click", () => {
+                const partido = partidos.find((p) => String(p.id) === boton.dataset.id);
+                if (partido) abrirFormularioPenales(partido, () => abrirDetalle(id));
             });
         });
 

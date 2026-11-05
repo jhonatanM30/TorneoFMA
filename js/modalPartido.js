@@ -182,6 +182,8 @@ export function inicializarModalPartido({ equipos = [], onPartidoGuardado = () =
                 partidoFinalizado = false;
                 equiposDisponibles = equipos;
                 selectTorneo.disabled = false;
+                selectLocal.disabled = false;
+                selectVisitante.disabled = false;
                 mostrarInfoTorneo("");
                 refrescarOpciones();
                 setStatus("");
@@ -190,7 +192,9 @@ export function inicializarModalPartido({ equipos = [], onPartidoGuardado = () =
             // opciones.idTorneo preselecciona el torneo (al crear desde el
             // detalle de un torneo). Al editar, el torneo no se puede cambiar
             // (el backend ignora idTorneo en PUT).
-            window.abrirModalPartido = async (partido = null, { idTorneo = null } = {}) => {
+            // opciones.equiposBloqueados: partido de las llaves, protegido: solo
+            // se edita su fecha y hora, no sus equipos.
+            window.abrirModalPartido = async (partido = null, { idTorneo = null, equiposBloqueados = false } = {}) => {
                 formPartido.reset();
                 golesInfo.hidden = true;
                 partidoFinalizado = false;
@@ -242,6 +246,11 @@ export function inicializarModalPartido({ equipos = [], onPartidoGuardado = () =
                 }
 
                 refrescarOpciones();
+                selectLocal.disabled = equiposBloqueados;
+                selectVisitante.disabled = equiposBloqueados;
+                if (equiposBloqueados) {
+                    mostrarInfoTorneo("Este partido es de las llaves: solo puedes cambiar su fecha y hora.");
+                }
                 if (!partidoFinalizado) {
                     setStatus("");
                 }

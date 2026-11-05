@@ -98,6 +98,23 @@ export class PartidoService {
         }
     }
 
+    // Penales de un partido en curso que exige ganador (llaves y repechaje
+    // de un KNOCKOUT): enteros >= 0 y distintos entre sí. No cambian el marcador.
+    static async registrarPenales(id, penalesLocal, penalesVisitante) {
+        try {
+            const response = await fetch(`${API_URL}/${id}/penales`, {
+                method: "PUT",
+                headers: construirHeaders(),
+                body: JSON.stringify({ penalesLocal, penalesVisitante })
+            });
+
+            return await parsearRespuesta(response, "Registrar penales");
+        } catch (error) {
+            console.error("Error al registrar penales:", error.message);
+            throw error;
+        }
+    }
+
     static async eliminarPartido(id) {
         try {
             const response = await fetch(`${API_URL}/${id}`, {

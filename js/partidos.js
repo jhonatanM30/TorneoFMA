@@ -5,6 +5,7 @@ import { mostrarToast } from "./toast.js";
 import { PartidoService } from "../services/PartidoService.js";
 import { inicializarModalPartido } from "./modalPartido.js";
 import { inicializarModalSorteo } from "./modalSorteo.js";
+import { abrirFormularioPenales, necesitaPenales } from "./penales.js";
 
 let partidosCache = [];
 let equiposCache = [];
@@ -231,6 +232,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                             <span class="${claseLocal}">${local}</span>
                             <span class="partido-marcador">${golesLocal} - ${golesVisitante}</span>
                             <span class="${claseVisitante}">${visitante}</span>
+                            ${partido.penalesLocal != null && partido.penalesVisitante != null
+                                ? `<span class="partido-penales">(pen. ${partido.penalesLocal} - ${partido.penalesVisitante})</span>` : ""}
                         </div>
                         <div class="partido-meta">
                             <span><i class="fas fa-calendar"></i> ${partido.fecha || "Sin fecha"} ${partido.hora || ""}</span>
@@ -241,6 +244,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     </div>
                     <div class="partido-actions">
                         <a class="btn btn-small btn-alineacion" href="alineaciones.html?idPartido=${partido.id ?? ""}">Alineación</a>
+                        ${necesitaPenales(partido) ? `<button class="btn btn-small btn-penales" data-requiere-admin="true" data-id="${partido.id ?? ""}">Registrar penales</button>` : ""}
                         ${botonEstado}
                         ${botonesEdicion}
                     </div>
@@ -287,6 +291,13 @@ document.addEventListener("DOMContentLoaded", async function () {
             });
         });
 
+        partidosContainer.querySelectorAll(".btn-penales").forEach((button) => {
+            button.addEventListener("click", () => {
+                const partido = partidos.find((item) => String(item.id) === String(button.dataset.id));
+                if (partido) abrirFormularioPenales(partido, cargarPartidos);
+            });
+        });
+
         partidosContainer.querySelectorAll(".btn-finalizar-partido").forEach((button) => {
             button.addEventListener("click", async () => {
                 const confirmar = window.confirm("¿Finalizar este partido? No podrás registrar más cambios de jugador.");
@@ -298,6 +309,12 @@ document.addEventListener("DOMContentLoaded", async function () {
                     await cargarPartidos();
                 } catch (error) {
                     mostrarToast(error.message || "No se pudo finalizar el partido", "error");
+                    // Un partido que exige ganador no termina empatado: el
+                    // servidor lo avisa y se abre el formulario de penales.
+                    const partido = partidos.find((item) => String(item.id) === String(button.dataset.id));
+                    if (partido && /penal|empat/i.test(error.message || "")) {
+                        abrirFormularioPenales(partido, cargarPartidos);
+                    }
                 }
             });
         });
