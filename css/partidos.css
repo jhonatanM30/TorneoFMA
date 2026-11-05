@@ -294,3 +294,9 @@ h2{
 .partido-novedades li {
     display: block;
 }
+
+.partido-penales {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-muted);
+}

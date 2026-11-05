@@ -47,6 +47,17 @@ export class TournamentService {
         return TournamentService.#lista(`/${id}/standings`, "Obtener tabla de posiciones");
     }
 
+    // Llaves de la eliminatoria: { rounds, thirdPlace, champion }. `rounds`
+    // viene vacía mientras no se generan.
+    static obtenerLlaves(id) {
+        return TournamentService.#pedir(`/${id}/bracket`, "Obtener llaves");
+    }
+
+    // Grupos con su tabla (lista vacía si el torneo no tiene grupos).
+    static obtenerGrupos(id) {
+        return TournamentService.#lista(`/${id}/groups`, "Obtener grupos");
+    }
+
     // --- Escrituras (ADMIN) -------------------------------------------------
     // torneo: { name, format }
     static crearTorneo(torneo) {
@@ -74,6 +85,19 @@ export class TournamentService {
     // Calendario automático de una liga: { startDate, time, intervalDays? }
     static async generarCalendario(id, datos) {
         const payload = await TournamentService.#pedir(`/${id}/schedule`, "Generar calendario", { method: "POST", body: datos });
+        return Array.isArray(payload) ? payload : [];
+    }
+
+    // datos: { startDate, time, intervalDays?, thirdPlaceMatch?, pairings? }
+    // `pairings` solo aplica a KNOCKOUT: [{ homeTeamId, awayTeamId }, ...]
+    static generarLlaves(id, datos) {
+        return TournamentService.#pedir(`/${id}/bracket`, "Generar llaves", { method: "POST", body: datos });
+    }
+
+    // datos: { groupCount, qualifiersPerGroup, startDate, time, intervalDays?, groups? }
+    // `groups` (composición manual): [{ teamIds: [...] }, ...] en orden A, B, C...
+    static async formarGrupos(id, datos) {
+        const payload = await TournamentService.#pedir(`/${id}/groups`, "Formar grupos", { method: "POST", body: datos });
         return Array.isArray(payload) ? payload : [];
     }
 
