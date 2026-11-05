@@ -27,7 +27,10 @@ export class PartidoDTO {
         golesLocal = 0,
         golesVisitante = 0,
         fase = "",
-        estado = "PROGRAMADO"
+        estado = "PROGRAMADO",
+        idTorneo = null,
+        penalesLocal = null,
+        penalesVisitante = null
     } = {}) {
         this.id = id;
         this.idEquipoLocal = idEquipoLocal;
@@ -40,5 +43,11 @@ export class PartidoDTO {
         this.golesVisitante = golesVisitante;
         this.fase = fase;
         this.estado = estado;
+        // idTorneo: se envía solo al crear (PUT lo ignora). Los penales los
+        // devuelve el servidor cuando existen (se registran con
+        // PartidoService.registrarPenales).
+        this.idTorneo = idTorneo;
+        this.penalesLocal = penalesLocal;
+        this.penalesVisitante = penalesVisitante;
     }
 }

@@ -1,0 +1,33 @@
+<div id="modal-torneo" class="modal" aria-modal="true" role="dialog">
+    <div class="modal-content">
+        <span class="close" aria-label="Cerrar modal">&times;</span>
+        <h2 id="torneo-modal-title">Crear torneo</h2>
+        <form id="form-torneo" novalidate>
+            <input type="hidden" id="torneo-id">
+
+            <label for="torneo-nombre">Nombre:</label>
+            <input type="text" id="torneo-nombre" name="name" minlength="3" maxlength="100" placeholder="Ej. Liga Apertura" required>
+
+            <label for="torneo-formato">Formato:</label>
+            <select id="torneo-formato" name="format" required>
+                <option value="">Seleccione un formato</option>
+                <option value="LEAGUE">Liga</option>
+                <option value="GROUPS_KNOCKOUT">Grupos y eliminatoria</option>
+                <option value="KNOCKOUT">Eliminatoria directa</option>
+            </select>
+            <p class="modal-help">
+                El nombre no se repite. El formato se puede cambiar mientras el torneo esté en
+                borrador; al iniciarlo queda bloqueado.
+            </p>
+
+            <div id="torneo-form-status" class="form-status" aria-live="polite"></div>
+
+            <div class="modal-buttons">
+                <button type="button" id="torneo-cancelar-btn" class="btn-secundario">Cancelar</button>
+                <button id="torneo-submit-btn" type="submit">
+                    <span id="torneo-submit-text">Crear</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -5,6 +5,12 @@
         <form id="form-partido" novalidate>
             <input type="hidden" id="partido-id">
 
+            <label for="partido-torneo">Torneo:</label>
+            <select id="partido-torneo" name="idTorneo">
+                <option value="">Sin torneo (va al Histórico)</option>
+            </select>
+            <p id="partido-torneo-info" class="modal-help" hidden></p>
+
             <label for="partido-local">Equipo Local:</label>
             <select id="partido-local" name="idEquipoLocal" required>
                 <option value="">Seleccione</option>

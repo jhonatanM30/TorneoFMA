@@ -1,5 +1,7 @@
 import { PartidoService } from "../services/PartidoService.js";
+import { TournamentService } from "../services/TournamentService.js";
 import { mostrarToast } from "./toast.js";
+import { escaparHtml } from "./formatos.js";
 
 const validarPartido = (partido) => {
     const errores = [];
@@ -70,6 +72,8 @@ export function inicializarModalPartido({ equipos = [], onPartidoGuardado = () =
             const selectLocal = modal.querySelector("#partido-local");
             const selectVisitante = modal.querySelector("#partido-visitante");
             const inputFecha = modal.querySelector("#partido-fecha");
+            const selectTorneo = modal.querySelector("#partido-torneo");
+            const torneoInfo = modal.querySelector("#partido-torneo-info");
 
             let partidoFinalizado = false;
 
@@ -84,16 +88,22 @@ export function inicializarModalPartido({ equipos = [], onPartidoGuardado = () =
             // Antes solo se validaba al enviar el formulario; ahora, en
             // cuanto se elige un equipo en un select, se le quita esa opcion
             // al otro select para que ni siquiera se pueda elegir el mismo.
+            //
+            // Con un torneo elegido, solo se ofrecen los equipos inscritos en
+            // él (equiposDisponibles); sin torneo o en el Histórico, todos.
+            let equiposDisponibles = equipos;
+            const torneosPorId = new Map();
+
             const refrescarOpciones = () => {
                 const idLocal = selectLocal.value;
                 const idVisitante = selectVisitante.value;
 
                 selectLocal.innerHTML = '<option value="">Seleccione</option>' +
-                    equipos.filter((equipo) => String(equipo.id) !== idVisitante)
+                    equiposDisponibles.filter((equipo) => String(equipo.id) !== idVisitante)
                         .map((equipo) => `<option value="${equipo.id}">${equipo.nombre}</option>`).join("");
 
                 selectVisitante.innerHTML = '<option value="">Seleccione</option>' +
-                    equipos.filter((equipo) => String(equipo.id) !== idLocal)
+                    equiposDisponibles.filter((equipo) => String(equipo.id) !== idLocal)
                         .map((equipo) => `<option value="${equipo.id}">${equipo.nombre}</option>`).join("");
 
                 selectLocal.value = idLocal;
@@ -111,6 +121,51 @@ export function inicializarModalPartido({ equipos = [], onPartidoGuardado = () =
                 formStatus.className = `form-status ${type}`;
             };
 
+            const mostrarInfoTorneo = (mensaje) => {
+                torneoInfo.hidden = !mensaje;
+                torneoInfo.textContent = mensaje || "";
+            };
+
+            // Solo torneos en curso (el "Histórico" también lo está).
+            const cargarTorneos = async () => {
+                let torneos = [];
+                try {
+                    torneos = (await TournamentService.obtenerTorneos()).filter((t) => t.status === "IN_PROGRESS");
+                } catch (error) {
+                    mostrarInfoTorneo("No se pudieron cargar los torneos; el partido irá al Histórico.");
+                }
+                torneosPorId.clear();
+                torneos.forEach((t) => torneosPorId.set(String(t.id), t));
+                selectTorneo.innerHTML = '<option value="">Sin torneo (va al Histórico)</option>' +
+                    torneos.map((t) => `<option value="${t.id}">${escaparHtml(t.name)}</option>`).join("");
+            };
+
+            // Al elegir torneo, los selectores de equipo muestran solo los inscritos.
+            const aplicarTorneo = async (idTorneo) => {
+                const torneo = torneosPorId.get(String(idTorneo));
+                mostrarInfoTorneo("");
+                if (!idTorneo || !torneo || torneo.format === "LEGACY") {
+                    equiposDisponibles = equipos;
+                } else {
+                    try {
+                        equiposDisponibles = await TournamentService.obtenerEquipos(idTorneo);
+                        if (equiposDisponibles.length === 0) {
+                            mostrarInfoTorneo("Este torneo no tiene equipos inscritos.");
+                        }
+                    } catch (error) {
+                        equiposDisponibles = [];
+                        setStatus(error.message || "No se pudieron cargar los equipos del torneo.", "error");
+                    }
+                }
+                // Si el equipo ya elegido no está inscrito, se descarta.
+                [selectLocal, selectVisitante].forEach((select) => {
+                    if (!equiposDisponibles.some((e) => String(e.id) === select.value)) select.value = "";
+                });
+                refrescarOpciones();
+            };
+
+            selectTorneo.addEventListener("change", () => aplicarTorneo(selectTorneo.value));
+
             const setSavingState = (isSaving) => {
                 submitButton.disabled = isSaving || partidoFinalizado;
                 submitButton.classList.toggle("is-loading", isSaving);
@@ -125,23 +180,49 @@ export function inicializarModalPartido({ equipos = [], onPartidoGuardado = () =
                 submitText.textContent = "Guardar";
                 golesInfo.hidden = true;
                 partidoFinalizado = false;
+                equiposDisponibles = equipos;
+                selectTorneo.disabled = false;
+                mostrarInfoTorneo("");
                 refrescarOpciones();
                 setStatus("");
             };
 
-            window.abrirModalPartido = (partido = null) => {
+            // opciones.idTorneo preselecciona el torneo (al crear desde el
+            // detalle de un torneo). Al editar, el torneo no se puede cambiar
+            // (el backend ignora idTorneo en PUT).
+            window.abrirModalPartido = async (partido = null, { idTorneo = null } = {}) => {
                 formPartido.reset();
                 golesInfo.hidden = true;
                 partidoFinalizado = false;
+                equiposDisponibles = equipos;
+                setSavingState(true);
+                modal.style.display = "flex";
+
+                await cargarTorneos();
 
                 if (!partido) {
                     hiddenId.value = "";
                     modalTitle.textContent = "Programar Partido";
                     submitText.textContent = "Guardar";
+                    selectTorneo.disabled = false;
+                    if (idTorneo && torneosPorId.has(String(idTorneo))) {
+                        selectTorneo.value = String(idTorneo);
+                    }
+                    await aplicarTorneo(selectTorneo.value);
                 } else {
                     hiddenId.value = partido.id || "";
                     modalTitle.textContent = "Editar Partido";
                     submitText.textContent = "Actualizar";
+
+                    if (partido.idTorneo != null) {
+                        if (!torneosPorId.has(String(partido.idTorneo))) {
+                            selectTorneo.insertAdjacentHTML("beforeend", `<option value="${partido.idTorneo}">Torneo #${partido.idTorneo}</option>`);
+                        }
+                        selectTorneo.value = String(partido.idTorneo);
+                    }
+                    selectTorneo.disabled = true;
+                    await aplicarTorneo(selectTorneo.value);
+
                     selectLocal.value = partido.idEquipoLocal ?? partido.equipoLocal?.id ?? "";
                     selectVisitante.value = partido.idEquipoVisitante ?? partido.equipoVisitante?.id ?? "";
                     formPartido.querySelector("#partido-fecha").value = partido.fecha || "";
@@ -165,7 +246,6 @@ export function inicializarModalPartido({ equipos = [], onPartidoGuardado = () =
                     setStatus("");
                 }
                 setSavingState(false);
-                modal.style.display = "flex";
             };
 
             btnCerrarModal.addEventListener("click", closeModal);
@@ -194,6 +274,11 @@ export function inicializarModalPartido({ equipos = [], onPartidoGuardado = () =
                     hora: formPartido.querySelector("#partido-hora").value,
                     fase: formPartido.querySelector("#partido-fase").value
                 };
+
+                // Solo al crear: el torneo de un partido no cambia después.
+                if (!payload.id && selectTorneo.value) {
+                    payload.idTorneo = Number(selectTorneo.value);
+                }
 
                 const errores = validarPartido(payload);
                 if (errores.length > 0) {
