@@ -42,6 +42,11 @@ export class TournamentService {
         return TournamentService.#lista(`/${id}/matches`, "Obtener partidos del torneo");
     }
 
+    // Tabla de posiciones de una liga (el servidor ya la devuelve ordenada).
+    static obtenerTabla(id) {
+        return TournamentService.#lista(`/${id}/standings`, "Obtener tabla de posiciones");
+    }
+
     // --- Escrituras (ADMIN) -------------------------------------------------
     // torneo: { name, format }
     static crearTorneo(torneo) {
@@ -64,6 +69,12 @@ export class TournamentService {
     static async retirarEquipo(id, teamId) {
         await TournamentService.#pedir(`/${id}/teams/${teamId}`, "Retirar equipo", { method: "DELETE" });
         return true;
+    }
+
+    // Calendario automático de una liga: { startDate, time, intervalDays? }
+    static async generarCalendario(id, datos) {
+        const payload = await TournamentService.#pedir(`/${id}/schedule`, "Generar calendario", { method: "POST", body: datos });
+        return Array.isArray(payload) ? payload : [];
     }
 
     static iniciarTorneo(id) {
