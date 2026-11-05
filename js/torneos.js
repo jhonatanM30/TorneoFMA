@@ -5,6 +5,7 @@ import { mostrarToast } from "./toast.js";
 import { escaparHtml, formatearFechaHora } from "./formatos.js";
 import { inicializarModalTorneo } from "./modalTorneo.js";
 import { inicializarModalPartido } from "./modalPartido.js";
+import { renderSeccionLiga, agruparPorJornada, htmlEncabezadoJornada } from "./torneoLiga.js";
 import {
     ETIQUETAS_FORMATO,
     ETIQUETAS_ESTADO_TORNEO,
@@ -123,7 +124,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 TournamentService.obtenerEquipos(id),
                 TournamentService.obtenerPartidos(id)
             ]);
-            renderDetalle(torneo, equipos, partidos);
+            await renderDetalle(torneo, equipos, partidos);
         } catch (error) {
             vistaDetalle.innerHTML = `
                 <a class="torneo-volver" href="#">← Todos los torneos</a>
@@ -133,7 +134,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    function renderDetalle(torneo, equipos, partidos) {
+    async function renderDetalle(torneo, equipos, partidos) {
         const historico = esHistorico(torneo);
         const borrador = torneo.status === "DRAFT";
         const enCurso = torneo.status === "IN_PROGRESS";
@@ -200,13 +201,33 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             <h4 class="torneo-seccion-titulo" id="torneo-partidos-titulo">Partidos del torneo</h4>
             <div id="torneo-partidos" class="partidos-container torneo-partidos">
-                ${partidos.length === 0
-                    ? "<div class='empty-state'>Este torneo todavía no tiene partidos.</div>"
-                    : partidos.map(tarjetaPartido).join("")}
+                ${htmlPartidos(torneo, equipos, partidos)}
             </div>
         `;
 
         conectarAcciones(torneo, equipos, partidos, pendientes);
+
+        // Sección propia del formato. Se rellena al final para que un fallo
+        // de la tabla no deje sin pintar el resto del detalle.
+        const seccionFormato = document.getElementById("torneo-seccion-formato");
+        if (torneo.format === "LEAGUE") {
+            await renderSeccionLiga(seccionFormato, torneo, partidos, () => abrirDetalle(torneo.id));
+        }
+    }
+
+    // Una liga con partidos se muestra por jornadas (una jornada = una fecha).
+    function htmlPartidos(torneo, equipos, partidos) {
+        if (partidos.length === 0) {
+            return "<div class='empty-state'>Este torneo todavía no tiene partidos.</div>";
+        }
+        if (torneo.format !== "LEAGUE") {
+            return partidos.map(tarjetaPartido).join("");
+        }
+        return agruparPorJornada(partidos, equipos).map((jornada) => `
+            <section class="jornada">
+                ${htmlEncabezadoJornada(jornada)}
+                ${jornada.partidos.map(tarjetaPartido).join("")}
+            </section>`).join("");
     }
 
     function tarjetaPartido(partido) {

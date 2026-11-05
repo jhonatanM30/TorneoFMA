@@ -175,3 +175,97 @@
     background: var(--color-cancelar-bg);
     color: var(--color-text);
 }
+
+/* Tabla de posiciones (liga y grupos) */
+.tabla-scroll {
+    overflow-x: auto;
+    background: var(--color-surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-soft);
+}
+
+.tabla-posiciones {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    color: var(--color-text);
+}
+
+.tabla-posiciones th,
+.tabla-posiciones td {
+    padding: 10px 8px;
+    text-align: center;
+    border-bottom: 1px solid var(--color-input-border);
+    white-space: nowrap;
+}
+
+.tabla-posiciones th {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    cursor: help;
+}
+
+.tabla-posiciones .col-equipo {
+    text-align: left;
+    white-space: normal;
+    font-weight: 600;
+}
+
+.tabla-posiciones .col-puntos {
+    font-weight: 800;
+}
+
+.tabla-posiciones tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.fila-clasifica {
+    background: rgba(31, 122, 31, 0.1);
+}
+
+.marca-clasifica {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    background: var(--color-success);
+    color: #fff;
+}
+
+/* Calendario por jornadas */
+.jornada {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 22px;
+}
+
+.jornada-encabezado {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 12px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--color-accent);
+    color: var(--color-text);
+}
+
+.jornada-encabezado span {
+    font-size: 13px;
+    color: var(--color-text-muted);
+}
+
+.jornada-descansa {
+    font-style: italic;
+}
+
+.torneo-calendario-vacio {
+    background: var(--color-surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-soft);
+    padding: 16px 20px;
+}
